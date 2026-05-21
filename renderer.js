@@ -128,9 +128,8 @@ async function checkSession() {
     if (loadingScreen) loadingScreen.classList.add('hidden');
     if (session || user) {
       console.log('Session or User found, showing app');
-      showApp();
+      await showApp();
       fetchTasks();
-      fetchActivityLog();
     } else {
       console.log('No session found, showing login');
       showLogin();
@@ -148,9 +147,7 @@ async function checkSession() {
     
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') {
       if (session) {
-        showApp();
-        fetchTasks();
-        fetchActivityLog();
+        showApp().then(() => fetchTasks());
       }
     } else if (event === 'SIGNED_OUT') {
       console.warn('⚠️ Session lost or signed out');
@@ -159,13 +156,14 @@ async function checkSession() {
   });
 }
 
-function showApp() {
+async function showApp() {
   loginScreen.classList.add('hidden');
   appContainer.classList.remove('hidden');
   updateUserProfileUI();
-  fetchUsers();
+  await fetchUsers();   // Tunggu profiles (+ avatar_url) terload dulu
   setupPresence();
   setupRealtime();
+  fetchActivityLog();   // teamMembers sudah terisi, avatar bisa di-lookup
 }
 
 async function updateUserProfileUI() {
@@ -596,7 +594,8 @@ async function logActivity(message, type) {
   if (!user) return;
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
   const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
-  await supabase.from('activity_log').insert({ message, type, user_id: user.id, user_name: name, user_avatar: avatar });
+  const { error } = await supabase.from('activity_log').insert({ message, type, user_id: user.id, user_name: name, user_avatar: avatar });
+  if (error) console.error('logActivity error (pastikan SQL sudah dijalankan):', error.message);
 }
 
 async function fetchActivityLog() {
@@ -1176,8 +1175,11 @@ function updateNotifUI() {
   }
 
   notifList.innerHTML = notifications.map(n => {
-    // Lookup avatar from profiles (teamMembers) as fallback
-    const member = n.userId ? teamMembers.find(m => m.id === n.userId) : null;
+    // Lookup avatar dari profiles — coba user_id dulu, fallback ke full_name
+    const member = teamMembers.find(m =>
+      (n.userId && m.id === n.userId) ||
+      (n.userName && m.full_name === n.userName)
+    ) || null;
     const avatarSrc = n.userAvatar || member?.avatar_url || null;
     const displayName = n.userName || member?.full_name || null;
     const initial = displayName ? displayName.charAt(0).toUpperCase() : '?';

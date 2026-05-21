@@ -332,6 +332,7 @@ function createTaskRow(task) {
   const tr = document.createElement('tr');
   tr.className = 'notion-row';
   tr.setAttribute('data-id', task.id);
+  tr.setAttribute('draggable', 'true');
   
   tr.innerHTML = `
     <td class="col-drag"><span class="drag-handle">⋮⋮</span></td>
@@ -438,13 +439,6 @@ async function saveTaskOrder() {
 }
 
 function setupRowDrag(tr) {
-  const handle = tr.querySelector('.drag-handle');
-
-  // Drag hanya aktif saat mousedown di handle
-  handle.addEventListener('mousedown', () => {
-    tr.setAttribute('draggable', 'true');
-  });
-
   tr.addEventListener('dragstart', (e) => {
     dragSrcRow = tr;
     e.dataTransfer.effectAllowed = 'move';
@@ -488,7 +482,6 @@ function setupRowDrag(tr) {
   });
 
   tr.addEventListener('dragend', () => {
-    tr.setAttribute('draggable', 'false');
     tr.classList.remove('row-dragging');
     document.querySelectorAll('.notion-row').forEach(r =>
       r.classList.remove('drag-over-top', 'drag-over-bottom')

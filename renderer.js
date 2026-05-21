@@ -610,8 +610,15 @@ async function logActivity(message, type) {
   // Try insert with user columns; fall back to basic insert if columns don't exist
   const { error } = await supabase.from('activity_log').insert({ message, type, user_id: user.id, user_name: name, user_avatar: avatar });
   if (error) {
-    console.warn('logActivity: kolom user belum ada, fallback ke basic insert. Jalankan SQL migration!');
-    await supabase.from('activity_log').insert({ message, type });
+    if (error.code === '42703') {
+      // Columns don't exist yet — fall back and remind to run migration
+      console.warn('logActivity: kolom user_id/user_name/user_avatar belum ada. Jalankan SQL migration di Supabase!');
+      await supabase.from('activity_log').insert({ message, type });
+    } else if (error.code === '42501' || error.message?.includes('row-level security')) {
+      console.error('logActivity: akses ditolak RLS. Tambahkan INSERT policy di Supabase untuk tabel activity_log.');
+    } else {
+      console.error('logActivity error:', error.message);
+    }
   }
 }
 

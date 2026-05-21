@@ -171,22 +171,29 @@ async function updateUserProfileUI() {
   if (user) {
     const name = user.user_metadata?.full_name || user.email.split('@')[0];
     const initial = name.charAt(0).toUpperCase();
-    
-    if (profileAvatarLarge) profileAvatarLarge.textContent = initial;
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+
+    if (profileAvatarLarge) {
+      if (avatarUrl) {
+        profileAvatarLarge.innerHTML = `<img src="${avatarUrl}" alt="${name}">`;
+      } else {
+        profileAvatarLarge.textContent = initial;
+      }
+    }
     if (profileEmailText) profileEmailText.textContent = user.email;
     if (displayEmail) displayEmail.value = user.email;
     if (fullNameInput) fullNameInput.value = user.user_metadata?.full_name || '';
-
 
     // Upsert to profiles table so others can see this user as an assignee
     await supabase.from('profiles').upsert({
       id: user.id,
       full_name: name,
       email: user.email,
+      avatar_url: avatarUrl,
       updated_at: new Date()
     });
-    
-    // Update presence with new name/initial
+
+    // Update presence with new name/avatar
     setupPresence();
   }
 }
@@ -1058,6 +1065,7 @@ async function setupPresence() {
 
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
   const initial = name.charAt(0).toUpperCase();
+  const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
 
   // If already subscribed, unsubscribe first to avoid duplicates
   if (presenceChannel) {
@@ -1084,6 +1092,7 @@ async function setupPresence() {
           name: name,
           initial: initial,
           email: user.email,
+          avatar_url: avatarUrl,
           online_at: new Date().toISOString(),
         });
       }
@@ -1102,7 +1111,9 @@ function updatePresenceUI(presenceState) {
 
   activeUsersContainer.innerHTML = users.map(u => `
     <div class="user-avatar-tiny" title="${u.name} (${u.email})">
-      ${u.initial}
+      ${u.avatar_url
+        ? `<img src="${u.avatar_url}" alt="${u.name}">`
+        : u.initial}
     </div>
   `).join('');
 }

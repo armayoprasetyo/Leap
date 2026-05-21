@@ -101,6 +101,7 @@ const toolbarBtns = document.querySelectorAll('.toolbar-btn');
 
 let notifications = [];
 let presenceChannel = null;
+let dragSrcRow = null;
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -415,7 +416,67 @@ function createTaskRow(task) {
     handleLinkEdit(e);
   });
 
+  setupRowDrag(tr);
+
   return tr;
+}
+
+function setupRowDrag(tr) {
+  const handle = tr.querySelector('.drag-handle');
+
+  // Drag hanya aktif saat mousedown di handle
+  handle.addEventListener('mousedown', () => {
+    tr.setAttribute('draggable', 'true');
+  });
+
+  tr.addEventListener('dragstart', (e) => {
+    dragSrcRow = tr;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => tr.classList.add('row-dragging'), 0);
+  });
+
+  tr.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (!dragSrcRow || dragSrcRow === tr) return;
+
+    document.querySelectorAll('.notion-row').forEach(r =>
+      r.classList.remove('drag-over-top', 'drag-over-bottom')
+    );
+
+    const rect = tr.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) {
+      tr.classList.add('drag-over-top');
+    } else {
+      tr.classList.add('drag-over-bottom');
+    }
+  });
+
+  tr.addEventListener('dragleave', () => {
+    tr.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+
+  tr.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (!dragSrcRow || dragSrcRow === tr) return;
+
+    const insertBefore = tr.classList.contains('drag-over-top');
+    tr.classList.remove('drag-over-top', 'drag-over-bottom');
+
+    if (insertBefore) {
+      taskTableBody.insertBefore(dragSrcRow, tr);
+    } else {
+      tr.after(dragSrcRow);
+    }
+  });
+
+  tr.addEventListener('dragend', () => {
+    tr.setAttribute('draggable', 'false');
+    tr.classList.remove('row-dragging');
+    document.querySelectorAll('.notion-row').forEach(r =>
+      r.classList.remove('drag-over-top', 'drag-over-bottom')
+    );
+    dragSrcRow = null;
+  });
 }
 
 function renderTasks(tasks) {

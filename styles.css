@@ -199,6 +199,25 @@ body {
   user-select: none;
 }
 
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Row being dragged */
+.notion-row.row-dragging td {
+  opacity: 0.35;
+  background: rgba(99, 102, 241, 0.04);
+}
+
+/* Drop indicator lines */
+.notion-row.drag-over-top td {
+  border-top: 2px solid var(--accent) !important;
+}
+
+.notion-row.drag-over-bottom td {
+  border-bottom: 2px solid var(--accent) !important;
+}
+
 /* Row Title */
 .row-title {
   color: var(--text-main);

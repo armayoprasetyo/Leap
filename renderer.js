@@ -623,10 +623,12 @@ taskForm.addEventListener('submit', async (e) => {
 // Modal Logic
 function openModal() {
   taskModal.classList.remove('hidden');
+  floatingNav.classList.add('nav-hidden');
 }
 
 function closeModal() {
   taskModal.classList.add('hidden');
+  floatingNav.classList.remove('nav-hidden');
 }
 
 openModalBtn.addEventListener('click', openModal);

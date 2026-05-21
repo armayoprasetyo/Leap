@@ -536,7 +536,7 @@ function setupRealtime() {
         return;
       }
 
-      addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at));
+      addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar);
     })
     .subscribe();
 }
@@ -591,6 +591,14 @@ function updateRowInPlace(row, task) {
   setTimeout(() => row.classList.remove('row-updated'), 700);
 }
 
+async function logActivity(message, type) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const name = user.user_metadata?.full_name || user.email.split('@')[0];
+  const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+  await supabase.from('activity_log').insert({ message, type, user_id: user.id, user_name: name, user_avatar: avatar });
+}
+
 async function fetchActivityLog() {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -613,7 +621,9 @@ async function fetchActivityLog() {
     notifications = data.map(item => ({
       message: item.message,
       time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: item.type
+      type: item.type,
+      userName: item.user_name || null,
+      userAvatar: item.user_avatar || null
     }));
     updateNotifUI();
   }
@@ -662,15 +672,19 @@ async function handleStatusChange(e) {
   badge.className = `status-badge ${getStatusClass(newStatus)}`;
 
   const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
-  if (error) console.error('Error updating status:', error);
+  if (error) { console.error('Error updating status:', error); return; }
+  const taskName = document.querySelector(`.row-title[data-id="${id}"]`)?.textContent || 'Task';
+  logActivity(`updated "${taskName}" → ${newStatus}`, 'update');
 }
 
 
 async function handleDeleteTask(e) {
   if (!confirm('Are you sure you want to delete this task?')) return;
   const id = e.target.getAttribute('data-id');
+  const taskName = document.querySelector(`.row-title[data-id="${id}"]`)?.textContent || 'Task';
   const { error } = await supabase.from('tasks').delete().eq('id', id);
-  if (error) console.error('Error deleting task:', error);
+  if (error) { console.error('Error deleting task:', error); return; }
+  logActivity(`deleted task "${taskName}"`, 'delete');
 }
 
 async function handleLinkEdit(e) {
@@ -740,7 +754,7 @@ taskForm.addEventListener('submit', async (e) => {
     console.error('Error adding task:', error.message, error.details);
     alert('Failed to add task: ' + error.message);
   } else {
-    console.log('Task added successfully');
+    logActivity(`created task "${newTask.name}"`, 'insert');
   }
 
   closeModal();
@@ -1082,10 +1096,10 @@ profileForm.addEventListener('submit', async (e) => {
 
 
 // Notification Logic
-function addNotification(message, type, date = new Date()) {
+function addNotification(message, type, date = new Date(), userName = null, userAvatar = null) {
   const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  
-  notifications.unshift({ message, time: timeStr, type });
+
+  notifications.unshift({ message, time: timeStr, type, userName, userAvatar });
   if (notifications.length > 50) notifications.pop(); 
   
   updateNotifUI();
@@ -1160,12 +1174,25 @@ function updateNotifUI() {
     return;
   }
 
-  notifList.innerHTML = notifications.map(n => `
-    <div class="notif-item">
-      <div class="notif-item-title">${n.message}</div>
-      <div class="notif-item-time">${n.time}</div>
-    </div>
-  `).join('');
+  notifList.innerHTML = notifications.map(n => {
+    const initial = n.userName ? n.userName.charAt(0).toUpperCase() : '?';
+    const avatarHtml = n.userAvatar
+      ? `<img src="${n.userAvatar}" alt="${n.userName}">`
+      : `<span class="notif-avatar-initial">${initial}</span>`;
+
+    return `
+      <div class="notif-item">
+        <div class="notif-avatar">${avatarHtml}</div>
+        <div class="notif-item-body">
+          <div class="notif-item-title">${n.message}</div>
+          <div class="notif-item-meta">
+            ${n.userName ? `<span class="notif-user">${n.userName}</span>` : ''}
+            <span class="notif-item-time">${n.time}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 notifBtn.addEventListener('click', (e) => {

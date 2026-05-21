@@ -1,11 +1,8 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist-web",
-  "installCommand": "npm install",
+  "installCommand": "npm install --ignore-scripts",
   "framework": null,
-  "engines": {
-    "node": "20.x"
-  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  // Use the project root as base
+  plugins: [tailwindcss()],
   root: '.',
   base: '/',
   server: {
@@ -13,11 +14,9 @@ export default defineConfig({
     outDir: 'dist-web',
     emptyOutDir: true,
   },
-  // Ensure Vite handles the 'require' references gracefully
   define: {
     'process.env': {},
   },
-  // Optimise the supabase dep
   optimizeDeps: {
     include: ['@supabase/supabase-js'],
   },

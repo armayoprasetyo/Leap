@@ -387,7 +387,7 @@ function createTaskRow(task) {
     </td>
     <td class="col-actions">
       <div class="actions-wrapper">
-        <button class="btn-icon btn-actions" data-id="${task.id}" title="Actions">⋮</button>
+        <button class="btn-actions" data-id="${task.id}" title="Actions">⋮</button>
         <div class="actions-dropdown hidden" id="dropdown-${task.id}">
           <button class="dropdown-item view-detail" data-id="${task.id}">👁 View Details</button>
           <button class="dropdown-item delete-task" data-id="${task.id}">🗑 Delete</button>

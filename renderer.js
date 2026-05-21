@@ -536,7 +536,7 @@ function setupRealtime() {
         return;
       }
 
-      addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar);
+      addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);
     })
     .subscribe();
 }
@@ -622,6 +622,7 @@ async function fetchActivityLog() {
       message: item.message,
       time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: item.type,
+      userId: item.user_id || null,
       userName: item.user_name || null,
       userAvatar: item.user_avatar || null
     }));
@@ -1096,10 +1097,10 @@ profileForm.addEventListener('submit', async (e) => {
 
 
 // Notification Logic
-function addNotification(message, type, date = new Date(), userName = null, userAvatar = null) {
+function addNotification(message, type, date = new Date(), userName = null, userAvatar = null, userId = null) {
   const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  notifications.unshift({ message, time: timeStr, type, userName, userAvatar });
+  notifications.unshift({ message, time: timeStr, type, userName, userAvatar, userId });
   if (notifications.length > 50) notifications.pop(); 
   
   updateNotifUI();
@@ -1175,9 +1176,15 @@ function updateNotifUI() {
   }
 
   notifList.innerHTML = notifications.map(n => {
-    const initial = n.userName ? n.userName.charAt(0).toUpperCase() : '?';
-    const avatarHtml = n.userAvatar
-      ? `<img src="${n.userAvatar}" alt="${n.userName}">`
+    // Lookup avatar from profiles (teamMembers) as fallback
+    const member = n.userId ? teamMembers.find(m => m.id === n.userId) : null;
+    const avatarSrc = n.userAvatar || member?.avatar_url || null;
+    const displayName = n.userName || member?.full_name || null;
+    const initial = displayName ? displayName.charAt(0).toUpperCase() : '?';
+
+    const avatarHtml = avatarSrc
+      ? `<img src="${avatarSrc}" alt="${displayName}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        + `<span class="notif-avatar-initial" style="display:none">${initial}</span>`
       : `<span class="notif-avatar-initial">${initial}</span>`;
 
     return `
@@ -1186,7 +1193,7 @@ function updateNotifUI() {
         <div class="notif-item-body">
           <div class="notif-item-title">${n.message}</div>
           <div class="notif-item-meta">
-            ${n.userName ? `<span class="notif-user">${n.userName}</span>` : ''}
+            ${displayName ? `<span class="notif-user">${displayName}</span>` : ''}
             <span class="notif-item-time">${n.time}</span>
           </div>
         </div>

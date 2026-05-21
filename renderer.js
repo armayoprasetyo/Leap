@@ -164,11 +164,11 @@ async function checkSession() {
 async function showApp() {
   loginScreen.classList.add('hidden');
   appContainer.classList.remove('hidden');
-  updateUserProfileUI();
-  await fetchUsers();   // Tunggu profiles (+ avatar_url) terload dulu
+  await updateUserProfileUI();  // await so currentUserInfo is set before fetchActivityLog
+  await fetchUsers();
   setupPresence();
   setupRealtime();
-  fetchActivityLog();   // teamMembers sudah terisi, avatar bisa di-lookup
+  fetchActivityLog();
 }
 
 async function updateUserProfileUI() {
@@ -636,12 +636,12 @@ async function fetchActivityLog() {
       let userName = item.user_name || null;
       let userAvatar = item.user_avatar || null;
 
-      // Fallback: if this activity belongs to the current user but DB columns are missing
+      // Fallback: if this is the current user but DB columns are missing
       if (!userName && currentUserInfo && userId === currentUserInfo.id) {
         userName = currentUserInfo.name;
         userAvatar = currentUserInfo.avatar;
       }
-      // Fallback: look up by user_id in teamMembers
+      // Fallback: look up by user_id in teamMembers profiles
       if (!userAvatar && userId) {
         const member = teamMembers.find(m => m.id === userId);
         if (member) { userName = userName || member.full_name; userAvatar = member.avatar_url || null; }
@@ -655,7 +655,8 @@ async function fetchActivityLog() {
         userName,
         userAvatar
       };
-    });
+    }).filter(n => n.userName); // hide old entries with no user info
+
     updateNotifUI();
   }
 }

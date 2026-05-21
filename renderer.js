@@ -102,6 +102,7 @@ const toolbarBtns = document.querySelectorAll('.toolbar-btn');
 let notifications = [];
 let presenceChannel = null;
 let dragSrcRow = null;
+const positionUpdateIds = new Set();
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -312,7 +313,7 @@ async function fetchTasks() {
 
   let tasks = [];
 
-  const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('tasks').select('*').order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching tasks:', error);
     // Silent fail to mock data if table not available
@@ -421,6 +422,21 @@ function createTaskRow(task) {
   return tr;
 }
 
+async function saveTaskOrder() {
+  const rows = taskTableBody.querySelectorAll('.notion-row');
+
+  const updates = Array.from(rows).map((row, index) => {
+    const id = row.getAttribute('data-id');
+    positionUpdateIds.add(id);
+    return supabase.from('tasks').update({ position: index + 1 }).eq('id', id);
+  });
+
+  await Promise.all(updates);
+
+  // Clear IDs setelah 3 detik (jaga-jaga realtime lambat)
+  setTimeout(() => positionUpdateIds.clear(), 3000);
+}
+
 function setupRowDrag(tr) {
   const handle = tr.querySelector('.drag-handle');
 
@@ -467,6 +483,8 @@ function setupRowDrag(tr) {
     } else {
       tr.after(dragSrcRow);
     }
+
+    saveTaskOrder();
   });
 
   tr.addEventListener('dragend', () => {
@@ -507,6 +525,7 @@ function setupRealtime() {
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload) => {
       console.log('Task Updated Realtime:', payload);
       const updatedTask = payload.new;
+      if (positionUpdateIds.has(updatedTask.id)) return;
       if (currentDetailTaskId === updatedTask.id) return;
 
       const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);

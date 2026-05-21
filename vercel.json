@@ -2,5 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist-web",
   "installCommand": "npm install",
-  "framework": null
+  "framework": null,
+  "engines": {
+    "node": "20.x"
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

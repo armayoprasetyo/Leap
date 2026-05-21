@@ -108,6 +108,7 @@ let activityChannel = null;
 let currentUserInfo = null;
 let pendingActivityInfo = null;
 let pendingActivityTimer = null;
+let isDragging = false;
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -447,6 +448,7 @@ async function saveTaskOrder() {
 function setupRowDrag(tr) {
   tr.addEventListener('dragstart', (e) => {
     dragSrcRow = tr;
+    isDragging = true;
     e.dataTransfer.effectAllowed = 'move';
     setTimeout(() => tr.classList.add('row-dragging'), 0);
   });
@@ -493,6 +495,7 @@ function setupRowDrag(tr) {
       r.classList.remove('drag-over-top', 'drag-over-bottom')
     );
     dragSrcRow = null;
+    setTimeout(() => { isDragging = false; }, 100); // slight delay to absorb any stray change events
   });
 }
 
@@ -697,6 +700,7 @@ function getPriorityLottieUrl(priority) {
 
 // Event Handlers
 async function handleStatusChange(e) {
+  if (isDragging) return;
   const id = e.target.getAttribute('data-id');
   const newStatus = e.target.value;
   

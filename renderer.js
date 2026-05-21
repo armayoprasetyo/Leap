@@ -109,6 +109,8 @@ let currentUserInfo = null;
 let pendingActivityInfo = null;
 let pendingActivityTimer = null;
 let isDragging = false;
+let appInitialized = false;
+let tasksLoaded = false;
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -157,12 +159,16 @@ async function checkSession() {
       }
     } else if (event === 'SIGNED_OUT') {
       console.warn('⚠️ Session lost or signed out');
+      appInitialized = false;
+      tasksLoaded = false;
       showLogin();
     }
   });
 }
 
 async function showApp() {
+  if (appInitialized) return;
+  appInitialized = true;
   loginScreen.classList.add('hidden');
   appContainer.classList.remove('hidden');
   await updateUserProfileUI();  // await so currentUserInfo is set before fetchActivityLog
@@ -315,6 +321,8 @@ signOutBtn.addEventListener('click', async () => {
 
 // Task Logic
 async function fetchTasks() {
+  if (tasksLoaded) return;
+  tasksLoaded = true;
   loadingIndicator.style.display = 'block';
   taskTableBody.innerHTML = '';
 

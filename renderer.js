@@ -502,30 +502,25 @@ function renderTasks(tasks) {
 function setupRealtime() {
   if (!supabase) return;
 
-  // Realtime Subscription - Completely smooth handling without fetchTasks() refreshes
   supabase.channel('custom-all-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
-      console.log('Task Created Realtime:', payload);
       const tr = createTaskRow(payload.new);
-      // Add to top of the list for better visibility of new tasks
+      tr.classList.add('row-enter');
       taskTableBody.prepend(tr);
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' }, (payload) => {
-      console.log('Task Deleted Realtime:', payload);
       const row = document.querySelector(`.notion-row[data-id="${payload.old.id}"]`);
-      if (row) row.remove();
+      if (row) {
+        row.classList.add('row-exit');
+        setTimeout(() => row.remove(), 250);
+      }
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload) => {
-      console.log('Task Updated Realtime:', payload);
       const updatedTask = payload.new;
       if (positionUpdateIds.has(updatedTask.id)) return;
       if (currentDetailTaskId === updatedTask.id) return;
-
       const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
-      if (existingRow) {
-        const newRow = createTaskRow(updatedTask);
-        existingRow.replaceWith(newRow);
-      }
+      if (existingRow) updateRowInPlace(existingRow, updatedTask);
     })
     .subscribe();
 
@@ -544,6 +539,56 @@ function setupRealtime() {
       addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at));
     })
     .subscribe();
+}
+
+function updateRowInPlace(row, task) {
+  const priority = task.priority || 'Medium';
+
+  const nameEl = row.querySelector('.row-title');
+  if (nameEl) nameEl.textContent = task.name;
+
+  const assigneeEl = row.querySelector('.chip-assignee');
+  if (assigneeEl) assigneeEl.textContent = task.assignee || '—';
+
+  const companyEl = row.querySelector('.col-company .notion-text');
+  if (companyEl) companyEl.textContent = task.company || '—';
+
+  const stakeholderEl = row.querySelector('.col-stakeholder .notion-text');
+  if (stakeholderEl) stakeholderEl.textContent = task.stake_holder || '—';
+
+  const priorityEl = row.querySelector('.priority-badge');
+  if (priorityEl) {
+    priorityEl.className = `priority-badge priority-${priority.toLowerCase()}`;
+    priorityEl.innerHTML = `
+      <lottie-player src="${getPriorityLottieUrl(priority)}"
+        background="transparent" speed="1"
+        style="width:18px;height:18px;" loop autoplay>
+      </lottie-player>${priority}`;
+  }
+
+  const statusBadge = row.querySelector('.status-badge');
+  const statusSelect = row.querySelector('.status-select');
+  if (statusBadge && statusSelect) {
+    statusBadge.className = `status-badge ${getStatusClass(task.status)}`;
+    statusSelect.value = task.status;
+  }
+
+  const linkCell = row.querySelector('.col-link');
+  if (linkCell && !linkCell.querySelector('.inline-link-edit')) {
+    if (task.working_link) {
+      linkCell.innerHTML = `<a href="${task.working_link}" target="_blank" class="notion-link">Open ↗</a>
+        <button class="btn-link-edit" data-id="${task.id}" data-link="${task.working_link}" title="Edit link">✎</button>`;
+      linkCell.querySelector('.btn-link-edit').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
+    } else {
+      linkCell.innerHTML = `<button class="btn-link-add" data-id="${task.id}" title="Add link">+ Add</button>`;
+      linkCell.querySelector('.btn-link-add').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
+    }
+  }
+
+  row.classList.remove('row-updated');
+  void row.offsetWidth;
+  row.classList.add('row-updated');
+  setTimeout(() => row.classList.remove('row-updated'), 700);
 }
 
 async function fetchActivityLog() {
@@ -626,7 +671,6 @@ async function handleDeleteTask(e) {
   const id = e.target.getAttribute('data-id');
   const { error } = await supabase.from('tasks').delete().eq('id', id);
   if (error) console.error('Error deleting task:', error);
-  fetchTasks();
 }
 
 async function handleLinkEdit(e) {
@@ -649,19 +693,30 @@ async function handleLinkEdit(e) {
   const cancelBtn = cell.querySelector('.inline-cancel-btn');
   input.focus();
 
+  const restoreCell = (link) => {
+    if (link) {
+      cell.innerHTML = `<a href="${link}" target="_blank" class="notion-link">Open ↗</a>
+        <button class="btn-link-edit" data-id="${id}" data-link="${link}" title="Edit link">✎</button>`;
+      cell.querySelector('.btn-link-edit').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
+    } else {
+      cell.innerHTML = `<button class="btn-link-add" data-id="${id}" title="Add link">+ Add</button>`;
+      cell.querySelector('.btn-link-add').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
+    }
+  };
+
   const save = async () => {
     const newLink = input.value.trim();
     const { error } = await supabase.from('tasks').update({ working_link: newLink }).eq('id', id);
-    if (error) console.error('Error updating link:', error);
-    fetchTasks();
+    if (error) { console.error('Error updating link:', error); restoreCell(existingLink); return; }
+    restoreCell(newLink);
   };
 
   saveBtn.addEventListener('click', save);
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') save();
-    if (e.key === 'Escape') fetchTasks();
+    if (e.key === 'Escape') restoreCell(existingLink);
   });
-  cancelBtn.addEventListener('click', () => fetchTasks());
+  cancelBtn.addEventListener('click', () => restoreCell(existingLink));
 }
 
 taskForm.addEventListener('submit', async (e) => {
@@ -690,7 +745,6 @@ taskForm.addEventListener('submit', async (e) => {
 
   closeModal();
   taskForm.reset();
-  fetchTasks();
 });
 
 // Modal Logic
@@ -849,7 +903,6 @@ function switchPage(pageId) {
 
   // Special logic per page
   if (pageId === 'profile') updateUserProfileUI();
-  if (pageId === 'tasklist') fetchTasks();
   if (pageId === 'notes') fetchNotes(); // Placeholder for now
 }
 

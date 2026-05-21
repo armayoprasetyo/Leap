@@ -105,6 +105,9 @@ let dragSrcRow = null;
 const positionUpdateIds = new Set();
 let tasksChannel = null;
 let activityChannel = null;
+let currentUserInfo = null;
+let pendingActivityInfo = null;
+let pendingActivityTimer = null;
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -185,6 +188,9 @@ async function updateUserProfileUI() {
     if (profileEmailText) profileEmailText.textContent = user.email;
     if (displayEmail) displayEmail.value = user.email;
     if (fullNameInput) fullNameInput.value = user.user_metadata?.full_name || '';
+
+    // Cache current user info for notification attribution
+    currentUserInfo = { id: user.id, name, avatar: avatarUrl };
 
     // Upsert to profiles table so others can see this user as an assignee
     await supabase.from('profiles').upsert({
@@ -592,8 +598,18 @@ async function logActivity(message, type) {
   if (!user) return;
   const name = user.user_metadata?.full_name || user.email.split('@')[0];
   const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+
+  // Cache user info so realtime callback can show avatar even without DB columns
+  pendingActivityInfo = { id: user.id, name, avatar };
+  if (pendingActivityTimer) clearTimeout(pendingActivityTimer);
+  pendingActivityTimer = setTimeout(() => { pendingActivityInfo = null; pendingActivityTimer = null; }, 5000);
+
+  // Try insert with user columns; fall back to basic insert if columns don't exist
   const { error } = await supabase.from('activity_log').insert({ message, type, user_id: user.id, user_name: name, user_avatar: avatar });
-  if (error) console.error('logActivity error (pastikan SQL sudah dijalankan):', error.message);
+  if (error) {
+    console.warn('logActivity: kolom user belum ada, fallback ke basic insert. Jalankan SQL migration!');
+    await supabase.from('activity_log').insert({ message, type });
+  }
 }
 
 async function fetchActivityLog() {
@@ -615,14 +631,31 @@ async function fetchActivityLog() {
   }
 
   if (data) {
-    notifications = data.map(item => ({
-      message: item.message,
-      time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: item.type,
-      userId: item.user_id || null,
-      userName: item.user_name || null,
-      userAvatar: item.user_avatar || null
-    }));
+    notifications = data.map(item => {
+      const userId = item.user_id || null;
+      let userName = item.user_name || null;
+      let userAvatar = item.user_avatar || null;
+
+      // Fallback: if this activity belongs to the current user but DB columns are missing
+      if (!userName && currentUserInfo && userId === currentUserInfo.id) {
+        userName = currentUserInfo.name;
+        userAvatar = currentUserInfo.avatar;
+      }
+      // Fallback: look up by user_id in teamMembers
+      if (!userAvatar && userId) {
+        const member = teamMembers.find(m => m.id === userId);
+        if (member) { userName = userName || member.full_name; userAvatar = member.avatar_url || null; }
+      }
+
+      return {
+        message: item.message,
+        time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: item.type,
+        userId,
+        userName,
+        userAvatar
+      };
+    });
     updateNotifUI();
   }
 }
@@ -1095,8 +1128,16 @@ profileForm.addEventListener('submit', async (e) => {
 
 // Notification Logic
 function addNotification(message, type, date = new Date(), userName = null, userAvatar = null, userId = null) {
-  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // If DB doesn't have user columns yet, use the pending cache (current user just triggered this)
+  if (!userName && pendingActivityInfo) {
+    userName = pendingActivityInfo.name;
+    userAvatar = pendingActivityInfo.avatar;
+    userId = pendingActivityInfo.id;
+    pendingActivityInfo = null;
+    if (pendingActivityTimer) { clearTimeout(pendingActivityTimer); pendingActivityTimer = null; }
+  }
 
+  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   notifications.unshift({ message, time: timeStr, type, userName, userAvatar, userId });
   if (notifications.length > 50) notifications.pop(); 
   

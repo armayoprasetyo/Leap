@@ -103,6 +103,8 @@ let notifications = [];
 let presenceChannel = null;
 let dragSrcRow = null;
 const positionUpdateIds = new Set();
+let tasksChannel = null;
+let activityChannel = null;
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -500,7 +502,11 @@ function renderTasks(tasks) {
 function setupRealtime() {
   if (!supabase) return;
 
-  supabase.channel('custom-all-channel')
+  // Remove existing channels sebelum subscribe ulang
+  if (tasksChannel) { supabase.removeChannel(tasksChannel); tasksChannel = null; }
+  if (activityChannel) { supabase.removeChannel(activityChannel); activityChannel = null; }
+
+  tasksChannel = supabase.channel('custom-all-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
       const tr = createTaskRow(payload.new);
       tr.classList.add('row-enter');
@@ -522,18 +528,10 @@ function setupRealtime() {
     })
     .subscribe();
 
-  // New Activity Log Subscription
-  supabase.channel('activity-log-channel')
+  activityChannel = supabase.channel('activity-log-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
-      console.log('Activity Log Entry:', payload);
-      
-      // Do not notify for description updates to reduce noise
       const msg = payload.new.message || '';
-      if (msg.toLowerCase().includes('description')) {
-        console.log('Skipping notification for description update');
-        return;
-      }
-
+      if (msg.toLowerCase().includes('description')) return;
       addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);
     })
     .subscribe();

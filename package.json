@@ -1,21 +1,53 @@
 {
   "name": "antigravity",
   "version": "1.0.0",
-  "description": "",
+  "description": "Antigravity task management and dashboard application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "web": "vite --port 5176",
+    "build": "vite build"
   },
   "keywords": [],
-  "author": "",
+  "author": "ADAUI-Studio",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
     "electron": "^42.0.1",
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-builder": "^26.8.1",
+    "electron-reload": "^2.0.0-alpha.1",
+    "vite": "^8.0.14"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4"
+  },
+  "build": {
+    "appId": "com.adauistudio.antigravity",
+    "productName": "Antigravity",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Antigravity"
+    }
   }
 }

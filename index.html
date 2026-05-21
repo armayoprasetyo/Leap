@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com;">
+  <!-- CSP is handled by server/Electron, not meta tag in web mode -->
   <title>Task Manager Sync</title>
   <link rel="stylesheet" href="styles.css">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Supabase is bundled by Vite from node_modules -->
   <!-- Lottie Player -->
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
@@ -347,8 +348,9 @@
         <p>AI will automatically transcribe and summarize the meeting into a new note.</p>
       </div>
     </div>
-  </div>
+  <!-- Floating Web Toast Notifications Container -->
+  <div id="webToastContainer" class="web-toast-container"></div>
 
-  <script src="renderer.js"></script>
+  <script type="module" src="/renderer.js"></script>
 </body>
 </html>

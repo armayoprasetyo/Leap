@@ -1,22 +1,38 @@
-const { createClient } = require('@supabase/supabase-js');
-const { ipcRenderer, shell } = require('electron');
+// ES module import — Vite bundles this from node_modules/@supabase/supabase-js
+import { createClient } from '@supabase/supabase-js';
+
+// Optional Electron APIs (only available in Electron context)
+let ipcRenderer = null;
+let shell = null;
+try {
+  if (typeof require !== 'undefined') {
+    const electron = require('electron');
+    ipcRenderer = electron.ipcRenderer;
+    shell = electron.shell;
+  }
+} catch (e) {
+  // Running in browser — Electron not available
+}
 
 // ==========================================
 // 🔴 REQUIRED: SUPABASE CONFIGURATION
-// Create a free project at https://supabase.com
-// Replace these with your actual URL and Anon Key to enable team sync!
-// ==========================================ASE_URL
+// ==========================================
 const supabaseUrl = 'https://aoolkdxiydrhezdzifnn.supabase.co';
 const supabaseKey = 'sb_publishable_3q_YR7yBddZXmaSZOyOJdA_QjpXssTs';
 
-let supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storage: window.localStorage
-  }
-});
+let supabase = null;
+try {
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: window.localStorage
+    }
+  });
+} catch (err) {
+  console.error('Failed to initialize Supabase:', err);
+}
 
 // Fallback in-memory data if Supabase is not configured (for UI demonstration)
 let mockTasks = [
@@ -97,18 +113,29 @@ let mentionRange = null;
 
 // Auth Logic
 async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (loadingScreen) loadingScreen.classList.add('hidden');
-
-  if (session || user) {
-    console.log('Session or User found, showing app');
-    showApp();
-    fetchTasks();
-    fetchActivityLog();
-  } else {
-    console.log('No session found, showing login');
+  try {
+    if (!supabase) {
+      console.error('Supabase client not initialized');
+      // Hide loading and show login UI
+      if (loadingScreen) loadingScreen.classList.add('hidden');
+      showLogin();
+      return;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (loadingScreen) loadingScreen.classList.add('hidden');
+    if (session || user) {
+      console.log('Session or User found, showing app');
+      showApp();
+      fetchTasks();
+      fetchActivityLog();
+    } else {
+      console.log('No session found, showing login');
+      showLogin();
+    }
+  } catch (err) {
+    console.error('Error during session check:', err);
+    if (loadingScreen) loadingScreen.classList.add('hidden');
     showLogin();
   }
 
@@ -136,6 +163,7 @@ function showApp() {
   updateUserProfileUI();
   fetchUsers();
   setupPresence();
+  setupRealtime();
 }
 
 async function updateUserProfileUI() {
@@ -190,61 +218,79 @@ function showLogin() {
 
 // Handle Google Sign In Click
 googleSignInBtn.addEventListener('click', async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'http://localhost:34567/auth/callback',
-      skipBrowserRedirect: true // Let us handle opening the URL
+  if (ipcRenderer && shell) {
+    // Electron environment: use local auth callback server
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'http://localhost:34567/auth/callback',
+        skipBrowserRedirect: true // Let us handle opening the URL
+      }
+    });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      alert('Error logging in');
+      return;
+    }
+
+    if (data?.url) {
+      shell.openExternal(data.url); // Open in user's default browser
+    }
+  } else {
+    // Web Browser environment: use standard redirect
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      }
+    });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      alert('Error logging in');
+    }
+  }
+});
+
+// Listen for deep link callback from main process (Electron only)
+if (ipcRenderer) {
+  ipcRenderer.on('oauth-callback', async (event, url) => {
+    console.log('Received auth callback URL');
+    try {
+      const urlObj = new URL(url);
+      const hash = urlObj.hash;
+      const searchParams = new URLSearchParams(urlObj.search);
+      
+      let result;
+      if (searchParams.has('code')) {
+        const code = searchParams.get('code');
+        result = await supabase.auth.exchangeCodeForSession(code);
+      } else if (hash) {
+        const params = new URLSearchParams(hash.substring(1));
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+        
+        if (access_token && refresh_token) {
+          result = await supabase.auth.setSession({ access_token, refresh_token });
+        }
+      }
+
+      if (result?.error) {
+        throw result.error;
+      }
+
+      if (result?.data?.session) {
+        console.log('Session established successfully');
+        showApp();
+        fetchTasks();
+      }
+    } catch (err) {
+      console.error('Error handling oauth callback:', err.message);
+      alert('Authentication failed: ' + err.message);
     }
   });
-
-  if (error) {
-    console.error('Login error:', error.message);
-    alert('Error logging in');
-    return;
-  }
-
-  if (data?.url) {
-    shell.openExternal(data.url); // Open in user's default browser
-  }
-});
-
-// Listen for deep link callback from main process
-ipcRenderer.on('oauth-callback', async (event, url) => {
-  console.log('Received auth callback URL');
-  try {
-    const urlObj = new URL(url);
-    const hash = urlObj.hash;
-    const searchParams = new URLSearchParams(urlObj.search);
-    
-    let result;
-    if (searchParams.has('code')) {
-      const code = searchParams.get('code');
-      result = await supabase.auth.exchangeCodeForSession(code);
-    } else if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      
-      if (access_token && refresh_token) {
-        result = await supabase.auth.setSession({ access_token, refresh_token });
-      }
-    }
-
-    if (result?.error) {
-      throw result.error;
-    }
-
-    if (result?.data?.session) {
-      console.log('Session established successfully');
-      showApp();
-      fetchTasks();
-    }
-  } catch (err) {
-    console.error('Error handling oauth callback:', err.message);
-    alert('Authentication failed: ' + err.message);
-  }
-});
+}
 
 // Handle Sign Out Click
 signOutBtn.addEventListener('click', async () => {
@@ -374,47 +420,51 @@ function renderTasks(tasks) {
   document.getElementById('addRowHint').onclick = () => document.getElementById('openModalBtn').click();
 }
 
-// Realtime Subscription - Completely smooth handling without fetchTasks() refreshes
-supabase.channel('custom-all-channel')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
-    console.log('Task Created Realtime:', payload);
-    const tr = createTaskRow(payload.new);
-    // Add to top of the list for better visibility of new tasks
-    taskTableBody.prepend(tr);
-  })
-  .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' }, (payload) => {
-    console.log('Task Deleted Realtime:', payload);
-    const row = document.querySelector(`.notion-row[data-id="${payload.old.id}"]`);
-    if (row) row.remove();
-  })
-  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload) => {
-    console.log('Task Updated Realtime:', payload);
-    const updatedTask = payload.new;
-    if (currentDetailTaskId === updatedTask.id) return;
+function setupRealtime() {
+  if (!supabase) return;
 
-    const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
-    if (existingRow) {
-      const newRow = createTaskRow(updatedTask);
-      existingRow.replaceWith(newRow);
-    }
-  })
-  .subscribe();
+  // Realtime Subscription - Completely smooth handling without fetchTasks() refreshes
+  supabase.channel('custom-all-channel')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
+      console.log('Task Created Realtime:', payload);
+      const tr = createTaskRow(payload.new);
+      // Add to top of the list for better visibility of new tasks
+      taskTableBody.prepend(tr);
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' }, (payload) => {
+      console.log('Task Deleted Realtime:', payload);
+      const row = document.querySelector(`.notion-row[data-id="${payload.old.id}"]`);
+      if (row) row.remove();
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload) => {
+      console.log('Task Updated Realtime:', payload);
+      const updatedTask = payload.new;
+      if (currentDetailTaskId === updatedTask.id) return;
 
-// New Activity Log Subscription
-supabase.channel('activity-log-channel')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
-    console.log('Activity Log Entry:', payload);
-    
-    // Do not notify for description updates to reduce noise
-    const msg = payload.new.message || '';
-    if (msg.toLowerCase().includes('description')) {
-      console.log('Skipping notification for description update');
-      return;
-    }
+      const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
+      if (existingRow) {
+        const newRow = createTaskRow(updatedTask);
+        existingRow.replaceWith(newRow);
+      }
+    })
+    .subscribe();
 
-    addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at));
-  })
-  .subscribe();
+  // New Activity Log Subscription
+  supabase.channel('activity-log-channel')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
+      console.log('Activity Log Entry:', payload);
+      
+      // Do not notify for description updates to reduce noise
+      const msg = payload.new.message || '';
+      if (msg.toLowerCase().includes('description')) {
+        console.log('Skipping notification for description update');
+        return;
+      }
+
+      addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at));
+    })
+    .subscribe();
+}
 
 async function fetchActivityLog() {
   const sevenDaysAgo = new Date();
@@ -909,8 +959,12 @@ function addNotification(message, type, date = new Date()) {
   if (date > new Date(Date.now() - 5000)) {
     notifBadge.classList.remove('hidden');
     
-    // Trigger Custom Desktop Banner Window
-    ipcRenderer.send('show-notification', { message, type });
+    // Trigger Custom Desktop Banner Window (Electron) or floating glassmorphic Toast (Web)
+    if (ipcRenderer) {
+      ipcRenderer.send('show-notification', { message, type });
+    } else {
+      showWebToast(message, type);
+    }
 
     // AI Voice Notification: "Ada UI"
     const utterance = new SpeechSynthesisUtterance("Ada UI");
@@ -919,6 +973,49 @@ function addNotification(message, type, date = new Date()) {
     utterance.pitch = 1.1;
     window.speechSynthesis.speak(utterance);
   }
+}
+
+// Float glassmorphic web toast notifications in standard browser
+function showWebToast(message, type) {
+  const container = document.getElementById('webToastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `web-toast type-${type}`;
+
+  let iconText = '💬';
+  let titleText = 'Project Update';
+  
+  if (type === 'insert') {
+    iconText = '✨';
+    titleText = 'New Task Created';
+  } else if (type === 'update') {
+    iconText = '🔄';
+    titleText = 'Task Updated';
+  } else if (type === 'delete') {
+    iconText = '🗑️';
+    titleText = 'Task Deleted';
+  }
+
+  toast.innerHTML = `
+    <div class="web-toast-icon">${iconText}</div>
+    <div class="web-toast-content">
+      <div class="web-toast-title">${titleText}</div>
+      <div class="web-toast-message">${message}</div>
+    </div>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto-remove after 4.5 seconds with sleek transition
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => {
+      if (toast.parentNode === container) {
+        container.removeChild(toast);
+      }
+    }, 350);
+  }, 4500);
 }
 
 
@@ -1162,4 +1259,17 @@ function hideMentionSuggestions() {
 }
 
 // Start
-checkSession();
+// Start the app after the DOM is ready to ensure elements exist
+document.addEventListener('DOMContentLoaded', () => {
+  // Initiate session check
+  checkSession();
+
+  // Safety timeout: if loading screen is still visible after 8 seconds, hide it and show login
+  setTimeout(() => {
+    if (!loadingScreen.classList.contains('hidden')) {
+      console.warn('Session check timed out, displaying login screen.');
+      loadingScreen.classList.add('hidden');
+      showLogin();
+    }
+  }, 8000);
+});

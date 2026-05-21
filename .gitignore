@@ -25,6 +25,11 @@ skills-lock.json
 # Supabase local temp files
 supabase/.temp/
 
+# Build output directories
+dist/
+dist-web/
+build/
+
 # Log files
 npm-debug.log*
 yarn-debug.log*

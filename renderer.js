@@ -104,6 +104,36 @@ const toolbarBtns = document.querySelectorAll('.toolbar-btn');
 
 
 
+// ── Dark Mode ─────────────────────────────────────────
+const darkModeBtn = document.getElementById('darkModeBtn');
+
+function updateDarkModeIcon(isDark) {
+  const icon = document.getElementById('darkModeIcon');
+  if (!icon) return;
+  icon.innerHTML = isDark
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`;
+}
+
+function setDarkMode(enabled) {
+  document.documentElement.classList.toggle('dark', enabled);
+  localStorage.setItem('darkMode', enabled ? 'true' : 'false');
+  updateDarkModeIcon(enabled);
+  // Re-render charts with correct colors if on statistics page
+  if (!document.getElementById('statisticsPage')?.classList.contains('hidden')) {
+    fetchStatistics();
+  }
+}
+
+// Initialise from saved preference
+const _savedDark = localStorage.getItem('darkMode') === 'true';
+if (_savedDark) { document.documentElement.classList.add('dark'); updateDarkModeIcon(true); }
+
+if (darkModeBtn) darkModeBtn.addEventListener('click', () => {
+  setDarkMode(!document.documentElement.classList.contains('dark'));
+});
+// ─────────────────────────────────────────────────────
+
 let notifications = [];
 let presenceChannel = null;
 let dragSrcRow = null;
@@ -1067,6 +1097,14 @@ async function fetchStatistics() {
     if (t.status in statusCounts) statusCounts[t.status]++;
   });
 
+  const isDark = document.documentElement.classList.contains('dark');
+  const clr = {
+    legendText:  isDark ? '#9ca3af' : '#6b7280',
+    gridLine:    isDark ? '#374151' : '#f3f4f6',
+    tickText:    isDark ? '#6b7280' : '#9ca3af',
+    cardBorder:  isDark ? '#1f2937' : '#fff',
+  };
+
   if (statusChartInstance) statusChartInstance.destroy();
   const donutCtx = document.getElementById('statusDonutChart');
   if (donutCtx) {
@@ -1076,9 +1114,11 @@ async function fetchStatistics() {
         labels: Object.keys(statusCounts),
         datasets: [{
           data: Object.values(statusCounts),
-          backgroundColor: ['#e5e7eb', '#3b82f6', '#f59e0b', '#22c55e'],
+          backgroundColor: isDark
+            ? ['#374151', '#1d4ed8', '#b45309', '#15803d']
+            : ['#e5e7eb', '#3b82f6', '#f59e0b', '#22c55e'],
           borderWidth: 2,
-          borderColor: '#fff',
+          borderColor: clr.cardBorder,
         }]
       },
       options: {
@@ -1088,7 +1128,7 @@ async function fetchStatistics() {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { boxWidth: 12, padding: 16, font: { family: 'Inter', size: 12 }, color: '#6b7280' }
+            labels: { boxWidth: 12, padding: 16, font: { family: 'Inter', size: 12 }, color: clr.legendText }
           }
         }
       }
@@ -1147,12 +1187,12 @@ async function fetchStatistics() {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 1, color: '#9ca3af', font: { family: 'Inter', size: 11 } },
-            grid: { color: '#f3f4f6' },
+            ticks: { stepSize: 1, color: clr.tickText, font: { family: 'Inter', size: 11 } },
+            grid: { color: clr.gridLine },
             border: { display: false }
           },
           x: {
-            ticks: { color: '#9ca3af', font: { family: 'Inter', size: 11 } },
+            ticks: { color: clr.tickText, font: { family: 'Inter', size: 11 } },
             grid: { display: false },
             border: { display: false }
           }

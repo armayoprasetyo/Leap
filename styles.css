@@ -435,3 +435,206 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .web-toast.type-insert .web-toast-title { color: #059669; }
 .web-toast.type-update .web-toast-title { color: #d97706; }
 .web-toast-message { font-size: 0.8125rem; color: #374151; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ============================================================
+   DARK MODE — Flowbite dark palette
+   gray-900 #111827 · gray-800 #1f2937 · gray-700 #374151
+   gray-600 #4b5563 · gray-500 #6b7280 · gray-400 #9ca3af
+   ============================================================ */
+
+/* Smooth transition on key surfaces */
+body, .app-header, .floating-nav, .notion-row td, .notion-header-row th,
+.modal-content, .detail-modal, .history-card, .stat-card, .chart-card,
+.note-card, .notif-panel, .actions-dropdown, .web-toast { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+
+/* Base */
+html.dark body { background: #111827; color: #f9fafb; }
+
+/* Header */
+html.dark .app-header { background: #1f2937; border-color: #374151; }
+html.dark .header-title { color: #f9fafb; }
+html.dark .header-divider { background: #374151; }
+html.dark .btn-icon-round { color: #9ca3af; }
+html.dark .btn-icon-round:hover { background: #374151; color: #f9fafb; }
+html.dark .btn-secondary { background: #374151; color: #e5e7eb; border-color: #4b5563; }
+html.dark .btn-secondary:hover { background: #4b5563; }
+
+/* Floating Nav */
+html.dark .floating-nav { background: #1f2937; border-color: #374151; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+html.dark .nav-item { color: #6b7280; }
+html.dark .nav-item:hover { background: #374151; color: #e5e7eb; }
+html.dark .nav-item.active { background: #1c64f2; color: #fff; }
+
+/* Table */
+html.dark .table-container::-webkit-scrollbar-thumb { background: #374151; }
+html.dark .notion-header-row th { background: #1f2937; color: #6b7280; border-color: #374151; }
+html.dark .notion-row td { background: #111827; border-color: #1f2937; }
+html.dark .notion-row:hover td { background: #1f2937; }
+html.dark .row-title { color: #f9fafb; }
+html.dark .notion-text { color: #9ca3af; }
+html.dark .notion-empty { color: #4b5563; }
+html.dark .notion-add-row { color: #4b5563; border-color: #1f2937; }
+html.dark .notion-add-row:hover { background: #1f2937; color: #9ca3af; }
+html.dark .chip-assignee { background: #1e3a5f; color: #93c5fd; }
+html.dark .notion-link { color: #60a5fa; }
+html.dark .notion-link:hover { color: #93c5fd; }
+html.dark .btn-link-add { border-color: #374151; color: #6b7280; }
+html.dark .btn-link-add:hover { border-color: #3b82f6; color: #60a5fa; }
+
+/* Row flash animation */
+@keyframes rowFlashDark { 0% { background-color: #111827; } 30% { background-color: #1e3a5f; } 100% { background-color: #111827; } }
+html.dark .notion-row.row-updated td { animation: rowFlashDark 0.7s ease-out; }
+html.dark .notion-row.row-dragging td { background: #1e3a5f !important; }
+
+/* Status badges */
+html.dark .status-todo     { background: #374151; color: #9ca3af; }
+html.dark .status-progress { background: #1e3a5f; color: #93c5fd; }
+html.dark .status-review   { background: #422006; color: #fcd34d; }
+html.dark .status-done     { background: #14532d; color: #86efac; }
+html.dark .status-todo .status-select     { color: #9ca3af; }
+html.dark .status-progress .status-select { color: #93c5fd; }
+html.dark .status-review .status-select   { color: #fcd34d; }
+html.dark .status-done .status-select     { color: #86efac; }
+html.dark .status-select option { background: #1f2937; color: #f9fafb; }
+
+/* Priority badges */
+html.dark .priority-low    { background: #14532d; color: #86efac; }
+html.dark .priority-medium { background: #422006; color: #fbbf24; }
+html.dark .priority-high   { background: #431407; color: #fdba74; }
+html.dark .priority-urgent { background: #450a0a; color: #fca5a5; }
+
+/* Actions dropdown */
+html.dark .btn-actions { color: #6b7280; }
+html.dark .btn-actions:hover { background: #374151; color: #e5e7eb; }
+html.dark .actions-dropdown { background: #1f2937; border-color: #374151; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+html.dark .dropdown-divider { background: #374151; }
+html.dark .dropdown-item { color: #e5e7eb; }
+html.dark .dropdown-item svg { color: #9ca3af; }
+html.dark .dropdown-item:hover { background: #374151; }
+html.dark .dropdown-item.mark-completed { color: #86efac; }
+html.dark .dropdown-item.mark-completed svg { color: #4ade80; }
+html.dark .dropdown-item.mark-completed:hover { background: #14532d; }
+html.dark .dropdown-item.delete-task { color: #fca5a5; }
+html.dark .dropdown-item.delete-task svg { color: #fca5a5; }
+html.dark .dropdown-item.delete-task:hover { background: #450a0a; }
+
+/* Add Task Modal */
+html.dark .modal-overlay { background: rgba(0,0,0,0.7); }
+html.dark .modal-content { background: #1f2937; border-color: #374151; }
+html.dark .modal-content h2 { color: #f9fafb; }
+html.dark .form-group label { color: #9ca3af; }
+html.dark .form-group input,
+html.dark .form-group select,
+html.dark .form-group textarea { background: #374151; border-color: #4b5563; color: #f9fafb; }
+html.dark .form-group input:focus,
+html.dark .form-group select:focus,
+html.dark .form-group textarea:focus { border-color: #3b82f6; background: #374151; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+html.dark .form-group select option { background: #1f2937; color: #f9fafb; }
+html.dark .label-optional { color: #6b7280; }
+
+/* Detail Drawer */
+html.dark .detail-modal { background: #1f2937; border-color: #374151; }
+html.dark .detail-title { color: #f9fafb; }
+html.dark .prop-label { color: #6b7280; }
+html.dark .prop-value { color: #e5e7eb; }
+html.dark .prop-input { color: #e5e7eb; }
+html.dark .prop-input:focus { background: #374151; }
+html.dark .prop-input option { background: #1f2937; color: #f9fafb; }
+html.dark .detail-property:hover { background: #374151; }
+html.dark .detail-content-area { border-color: #374151; }
+html.dark .detail-content-area h3 { color: #6b7280; }
+html.dark .detail-description { color: #d1d5db; }
+html.dark [contenteditable=true]:empty:before { color: #4b5563; }
+
+/* Notification Panel */
+html.dark .notif-panel { background: #1f2937; border-color: #374151; }
+html.dark .notif-header { border-color: #374151; }
+html.dark .notif-header h3 { color: #f9fafb; }
+html.dark .notif-item { border-color: #1f2937; }
+html.dark .notif-item:hover { background: #374151; }
+html.dark .notif-item-title { color: #e5e7eb; }
+html.dark .notif-badge { border-color: #1f2937; }
+html.dark .btn-close-sm { color: #6b7280; }
+html.dark .btn-close-sm:hover { color: #e5e7eb; }
+
+/* Statistics Page */
+html.dark .stats-page-title,
+html.dark .stats-section-title { color: #f9fafb; }
+html.dark .stat-card { background: #1f2937; border-color: #374151; }
+html.dark .stat-value { color: #f9fafb; }
+html.dark .stat-icon-active    { background: #1e3a5f; }
+html.dark .stat-icon-completed { background: #14532d; }
+html.dark .stat-icon-deleted   { background: #450a0a; }
+html.dark .chart-card { background: #1f2937; border-color: #374151; }
+html.dark .chart-title { color: #e5e7eb; }
+html.dark .stats-section-divider { border-color: #374151; }
+
+/* History / Timeline */
+html.dark .history-title { color: #f9fafb; }
+html.dark .history-tabs { background: #374151; }
+html.dark .history-tab { color: #9ca3af; }
+html.dark .history-tab.active { background: #1f2937; color: #f9fafb; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+html.dark .history-dot { border-color: #111827; }
+html.dark .history-line { background: #374151; }
+html.dark .history-card { background: #1f2937; border-color: #374151; }
+html.dark .history-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+html.dark .history-task-name { color: #6b7280; }
+html.dark .history-task-completed { color: #f9fafb; }
+html.dark .history-assignee { background: #374151; color: #9ca3af; }
+html.dark .history-company { color: #6b7280; }
+html.dark .btn-restore { background: #1e3a5f; color: #60a5fa; border-color: #1d4ed8; }
+html.dark .btn-restore:hover { background: #1e40af; border-color: #2563eb; }
+html.dark .btn-delete-permanent { background: #1f2937; border-color: #7f1d1d; color: #fca5a5; }
+html.dark .btn-delete-permanent:hover { background: #450a0a; }
+
+/* Profile */
+html.dark #profilePage { background: #111827; }
+html.dark .profile-card { background: #1f2937; border-color: #374151; }
+html.dark .profile-header-large h2 { color: #f9fafb; }
+
+/* Notes */
+html.dark .notes-header { background: #1f2937; border-color: #374151; }
+html.dark .notes-header h2 { color: #f9fafb; }
+html.dark .notes-grid { background: #111827; }
+html.dark .note-card { background: #1f2937; border-color: #374151; }
+html.dark .note-card:hover { border-color: #3b82f6; box-shadow: 0 4px 20px rgba(59,130,246,0.12); }
+html.dark .note-card h3 { color: #f9fafb; }
+html.dark .note-card .note-excerpt { color: #9ca3af; }
+html.dark .note-card .note-date { color: #4b5563; }
+html.dark .note-card-placeholder { background: #1f2937; border-color: #374151; color: #6b7280; }
+html.dark .note-card-placeholder h3 { color: #9ca3af; }
+
+/* Note Editor */
+html.dark #noteEditorPage { background: #111827; color: #f9fafb; }
+html.dark .editor-header { background: #1f2937; border-color: #374151; }
+html.dark .editor-title { color: #f9fafb; }
+html.dark .editor-toolbar { background: #111827; border-color: #374151; }
+html.dark .toolbar-btn { background: #1f2937; border-color: #374151; color: #9ca3af; }
+html.dark .toolbar-btn:hover { background: #374151; border-color: #3b82f6; color: #60a5fa; }
+html.dark .toolbar-divider { background: #374151; }
+html.dark .editor-content { color: #d1d5db; }
+
+/* Mentions */
+html.dark .mention-suggestions { background: #1f2937; border-color: #374151; }
+html.dark .mention-item { color: #9ca3af; }
+html.dark .mention-chip { background: #1e3a5f; color: #93c5fd; border-color: #1d4ed8; }
+
+/* Recap modal */
+html.dark .api-key-section { background: #1e3a5f; border-color: #1d4ed8; }
+html.dark .drop-zone { background: #1f2937; border-color: #374151; }
+html.dark .drop-zone p { color: #e5e7eb; }
+html.dark .drop-zone:hover { border-color: #3b82f6; background: #1e3a5f; }
+html.dark .progress-bar-container { background: #374151; }
+html.dark .recap-footer { border-color: #374151; }
+
+/* Toast */
+html.dark .web-toast { background: #1f2937; border-color: #374151; }
+html.dark .web-toast-icon { background: #1e3a5f; }
+html.dark .web-toast.type-insert .web-toast-icon { background: #14532d; }
+html.dark .web-toast.type-update .web-toast-icon { background: #422006; }
+html.dark .web-toast-message { color: #e5e7eb; }
+
+/* Loading */
+html.dark .loading-screen { background: #111827; }
+html.dark .spinner { border-color: #374151; border-top-color: #3b82f6; }
+html.dark .loader-content p { color: #6b7280; }

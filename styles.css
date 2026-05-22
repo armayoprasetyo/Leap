@@ -191,12 +191,19 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 
 /* ── Actions Dropdown ── */
 .actions-wrapper { position: relative; display: flex; justify-content: center; }
-.btn-actions { font-size: 1.2rem; padding: 0 8px; color: #9ca3af; cursor: pointer; border-radius: 6px; border: none; background: transparent; transition: background 0.15s, color 0.15s; line-height: 1; }
+.btn-actions { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #9ca3af; cursor: pointer; border-radius: 6px; border: none; background: transparent; transition: background 0.15s, color 0.15s; }
 .btn-actions:hover { background: #f3f4f6; color: #374151; }
-.actions-dropdown { position: absolute; top: 100%; right: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; min-width: 156px; z-index: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 4px; margin-top: 4px; }
-.dropdown-item { width: 100%; text-align: left; background: transparent; border: none; color: #374151; padding: 8px 12px; font-size: 0.8125rem; border-radius: 7px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.1s; font-family: inherit; }
+.actions-dropdown { position: absolute; top: calc(100% + 4px); right: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; min-width: 188px; z-index: 500; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05); padding: 4px; }
+.dropdown-list { list-style: none; margin: 0; padding: 0; }
+.dropdown-divider { height: 1px; background: #f3f4f6; margin: 4px 0; }
+.dropdown-item { width: 100%; text-align: left; background: transparent; border: none; color: #374151; padding: 8px 12px; font-size: 0.875rem; font-weight: 500; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.1s; font-family: inherit; white-space: nowrap; }
+.dropdown-item svg { color: #6b7280; flex-shrink: 0; }
 .dropdown-item:hover { background: #f9fafb; }
+.dropdown-item.mark-completed { color: #15803d; }
+.dropdown-item.mark-completed svg { color: #16a34a; }
+.dropdown-item.mark-completed:hover { background: #f0fdf4; }
 .dropdown-item.delete-task { color: #dc2626; }
+.dropdown-item.delete-task svg { color: #dc2626; }
 .dropdown-item.delete-task:hover { background: #fef2f2; }
 
 /* ── Modal ── */

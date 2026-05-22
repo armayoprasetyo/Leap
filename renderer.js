@@ -395,11 +395,31 @@ function createTaskRow(task) {
     <td class="col-link">${renderLinkCell(task.id, task.working_link)}</td>
     <td class="col-actions">
       <div class="actions-wrapper">
-        <button class="btn-actions" data-id="${task.id}" title="Actions">⋮</button>
+        <button class="btn-actions" data-id="${task.id}" title="Actions">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
         <div class="actions-dropdown hidden" id="dropdown-${task.id}">
-          <button class="dropdown-item view-detail" data-id="${task.id}">👁 View Details</button>
-          <button class="dropdown-item mark-completed" data-id="${task.id}">✅ Mark as Completed</button>
-          <button class="dropdown-item delete-task" data-id="${task.id}" style="color:#dc2626;">🗑 Delete</button>
+          <ul class="dropdown-list">
+            <li>
+              <button class="dropdown-item view-detail" data-id="${task.id}">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                View Details
+              </button>
+            </li>
+            <li>
+              <button class="dropdown-item mark-completed" data-id="${task.id}">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Mark as Completed
+              </button>
+            </li>
+            <li class="dropdown-divider"></li>
+            <li>
+              <button class="dropdown-item delete-task" data-id="${task.id}">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Delete
+              </button>
+            </li>
+          </ul>
         </div>
       </div>
     </td>

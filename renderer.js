@@ -566,9 +566,14 @@ function setupRealtime() {
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload) => {
       const updatedTask = payload.new;
       if (positionUpdateIds.has(updatedTask.id)) return;
-      if (currentDetailTaskId === updatedTask.id) return;
       const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
-      if (existingRow) updateRowInPlace(existingRow, updatedTask);
+      if (!existingRow) return;
+      if (updatedTask.completed_at || updatedTask.deleted_at) {
+        removeRowFromTable(updatedTask.id);
+        return;
+      }
+      if (currentDetailTaskId === updatedTask.id) return;
+      updateRowInPlace(existingRow, updatedTask);
     })
     .subscribe();
 
@@ -771,16 +776,26 @@ async function handleStatusChange(e) {
 
 
 async function handleMarkCompleted(e) {
-  const id = e.target.getAttribute('data-id');
+  const id = e.target.closest('[data-id]').getAttribute('data-id');
   const { error } = await supabase.from('tasks').update({ completed_at: new Date().toISOString() }).eq('id', id);
   if (error) { console.error('Error marking task completed:', error); return; }
+  removeRowFromTable(id);
 }
 
 async function handleDeleteTask(e) {
   if (!confirm('Are you sure you want to delete this task?')) return;
-  const id = e.target.getAttribute('data-id');
+  const id = e.target.closest('[data-id]').getAttribute('data-id');
   const { error } = await supabase.from('tasks').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) { console.error('Error deleting task:', error); return; }
+  removeRowFromTable(id);
+}
+
+function removeRowFromTable(id) {
+  const row = document.querySelector(`.notion-row[data-id="${id}"]`);
+  if (!row) return;
+  row.style.transition = 'opacity 0.25s';
+  row.style.opacity = '0';
+  setTimeout(() => row.remove(), 250);
 }
 
 async function handleLinkEdit(e) {

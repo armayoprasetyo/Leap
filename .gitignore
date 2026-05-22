@@ -3,7 +3,7 @@ node_modules/
 
 # Agent and internal configuration files
 .agents/
-.antigravityignore
+.leapignore
 skills-lock.json
 
 # Local environment/sensitive files

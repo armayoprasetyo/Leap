@@ -1,7 +1,7 @@
 {
-  "name": "antigravity",
+  "name": "leap",
   "version": "1.0.0",
-  "description": "Antigravity task management and dashboard application",
+  "description": "Leap task management and dashboard application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -27,8 +27,8 @@
     "tailwindcss": "^4.3.0"
   },
   "build": {
-    "appId": "com.adauistudio.antigravity",
-    "productName": "Antigravity",
+    "appId": "com.adauistudio.leap",
+    "productName": "Leap",
     "directories": {
       "output": "dist"
     },
@@ -49,7 +49,7 @@
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Antigravity"
+      "shortcutName": "Leap"
     }
   }
 }

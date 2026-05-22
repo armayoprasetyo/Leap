@@ -27,14 +27,14 @@ serve(async (req) => {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Antigravity <onboarding@resend.dev>',
+      from: 'Leap <onboarding@resend.dev>',
       to: [profile.email],
       subject: `New Task Assigned: ${record.name}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 10px;">
           <h2 style="color: #6c63ff;">You have a new task! 🚀</h2>
           <p>Hi there,</p>
-          <p>A new task has been assigned to you in <strong>Antigravity</strong>.</p>
+          <p>A new task has been assigned to you in <strong>Leap</strong>.</p>
           <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #6c63ff;">
             <p><strong>Task:</strong> ${record.name}</p>
             <p><strong>Priority:</strong> ${record.priority || 'Medium'}</p>
@@ -42,7 +42,7 @@ serve(async (req) => {
           </div>
           <p>Go to your dashboard to start working on it.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 0.8rem; color: #999;">This is an automated notification from Antigravity.</p>
+          <p style="font-size: 0.8rem; color: #999;">This is an automated notification from Leap.</p>
         </div>
       `,
     })

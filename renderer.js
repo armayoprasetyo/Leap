@@ -1,5 +1,6 @@
 // ES module import — Vite bundles this from node_modules/@supabase/supabase-js
 import { createClient } from '@supabase/supabase-js';
+import Chart from 'chart.js/auto';
 import notificationSoundSrc from './assets/notification.wav';
 
 const notifSound = new Audio(notificationSoundSrc);
@@ -987,7 +988,7 @@ function switchPage(pageId) {
   // Special logic per page
   if (pageId === 'profile') updateUserProfileUI();
   if (pageId === 'notes') fetchNotes();
-  if (pageId === 'history') fetchHistory();
+  if (pageId === 'statistics') fetchStatistics();
 }
 
 // Add Nav Listeners
@@ -997,6 +998,135 @@ navItems.forEach(item => {
     switchPage(pageId);
   });
 });
+
+// ── Statistics ───────────────────────────────────────
+let statusChartInstance = null;
+let completionChartInstance = null;
+
+async function fetchStatistics() {
+  // Fetch task counts in parallel
+  const [activeRes, completedRes, deletedRes] = await Promise.all([
+    supabase.from('tasks').select('*', { count: 'exact', head: true }).is('deleted_at', null).is('completed_at', null),
+    supabase.from('tasks').select('*', { count: 'exact', head: true }).not('completed_at', 'is', null),
+    supabase.from('tasks').select('*', { count: 'exact', head: true }).not('deleted_at', 'is', null),
+  ]);
+
+  const activeCount = activeRes.count ?? 0;
+  const completedCount = completedRes.count ?? 0;
+  const deletedCount = deletedRes.count ?? 0;
+
+  const activeEl = document.getElementById('statActiveCount');
+  const completedEl = document.getElementById('statCompletedCount');
+  const deletedEl = document.getElementById('statDeletedCount');
+  if (activeEl) activeEl.textContent = activeCount;
+  if (completedEl) completedEl.textContent = completedCount;
+  if (deletedEl) deletedEl.textContent = deletedCount;
+
+  // Fetch active tasks for status donut chart
+  const { data: activeTasks } = await supabase
+    .from('tasks').select('status').is('deleted_at', null).is('completed_at', null);
+
+  const statusCounts = { 'To Do': 0, 'In Progress': 0, 'Review': 0, 'Done': 0 };
+  (activeTasks || []).forEach(t => {
+    if (t.status in statusCounts) statusCounts[t.status]++;
+  });
+
+  if (statusChartInstance) statusChartInstance.destroy();
+  const donutCtx = document.getElementById('statusDonutChart');
+  if (donutCtx) {
+    statusChartInstance = new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statusCounts),
+        datasets: [{
+          data: Object.values(statusCounts),
+          backgroundColor: ['#e5e7eb', '#3b82f6', '#f59e0b', '#22c55e'],
+          borderWidth: 2,
+          borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 16, font: { family: 'Inter', size: 12 }, color: '#6b7280' }
+          }
+        }
+      }
+    });
+  }
+
+  // Fetch completions for last 7 days
+  const dayLabels = [];
+  const dayCounts = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    dayLabels.push(d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }));
+    dayCounts.push(0);
+  }
+
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(now.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const { data: recentCompleted } = await supabase
+    .from('tasks').select('completed_at')
+    .not('completed_at', 'is', null)
+    .gte('completed_at', sevenDaysAgo.toISOString());
+
+  (recentCompleted || []).forEach(t => {
+    const d = new Date(t.completed_at);
+    const msAgo = now.getTime() - d.getTime();
+    const daysAgo = Math.floor(msAgo / 86400000);
+    const idx = 6 - daysAgo;
+    if (idx >= 0 && idx < 7) dayCounts[idx]++;
+  });
+
+  if (completionChartInstance) completionChartInstance.destroy();
+  const barCtx = document.getElementById('completionBarChart');
+  if (barCtx) {
+    completionChartInstance = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: dayLabels,
+        datasets: [{
+          label: 'Completed',
+          data: dayCounts,
+          backgroundColor: '#1c64f2',
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, color: '#9ca3af', font: { family: 'Inter', size: 11 } },
+            grid: { color: '#f3f4f6' },
+            border: { display: false }
+          },
+          x: {
+            ticks: { color: '#9ca3af', font: { family: 'Inter', size: 11 } },
+            grid: { display: false },
+            border: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  fetchHistory();
+}
 
 // ── History ──────────────────────────────────────────
 let activeHistoryTab = 'completed';

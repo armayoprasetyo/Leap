@@ -503,7 +503,7 @@ function setupRowDrag(tr) {
       r.classList.remove('drag-over-top', 'drag-over-bottom')
     );
     dragSrcRow = null;
-    setTimeout(() => { isDragging = false; }, 100); // slight delay to absorb any stray change events
+    setTimeout(() => { isDragging = false; }, 500); // delay to absorb stray change events and slow realtime callbacks
   });
 }
 
@@ -605,6 +605,7 @@ function updateRowInPlace(row, task) {
 }
 
 async function logActivity(message, type) {
+  if (isDragging) return;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   const name = user.user_metadata?.full_name || user.email.split('@')[0];

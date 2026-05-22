@@ -1,5 +1,9 @@
 // ES module import — Vite bundles this from node_modules/@supabase/supabase-js
 import { createClient } from '@supabase/supabase-js';
+import notificationSoundSrc from './assets/notification.wav';
+
+const notifSound = new Audio(notificationSoundSrc);
+notifSound.volume = 0.6;
 
 // Optional Electron APIs (only available in Electron context)
 let ipcRenderer = null;
@@ -1188,12 +1192,8 @@ function addNotification(message, type, date = new Date(), userName = null, user
       showWebToast(message, type);
     }
 
-    // AI Voice Notification: "Ada UI"
-    const utterance = new SpeechSynthesisUtterance("Ada UI");
-    utterance.lang = 'id-ID'; // Set to Indonesian
-    utterance.rate = 1.0;
-    utterance.pitch = 1.1;
-    window.speechSynthesis.speak(utterance);
+    notifSound.currentTime = 0;
+    notifSound.play().catch(() => {});
   }
 }
 

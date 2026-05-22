@@ -391,13 +391,7 @@ function createTaskRow(task) {
         </select>
       </span>
     </td>
-    <td class="col-link">
-      ${task.working_link
-        ? `<a href="${task.working_link}" target="_blank" class="notion-link">Open ↗</a>
-           <button class="btn-link-edit" data-id="${task.id}" data-link="${task.working_link}" title="Edit link">✎</button>`
-        : `<button class="btn-link-add" data-id="${task.id}" title="Add link">+ Add</button>`
-      }
-    </td>
+    <td class="col-link">${renderLinkCell(task.id, task.working_link)}</td>
     <td class="col-actions">
       <div class="actions-wrapper">
         <button class="btn-actions" data-id="${task.id}" title="Actions">⋮</button>
@@ -601,14 +595,9 @@ function updateRowInPlace(row, task) {
 
   const linkCell = row.querySelector('.col-link');
   if (linkCell && !linkCell.querySelector('.inline-link-edit')) {
-    if (task.working_link) {
-      linkCell.innerHTML = `<a href="${task.working_link}" target="_blank" class="notion-link">Open ↗</a>
-        <button class="btn-link-edit" data-id="${task.id}" data-link="${task.working_link}" title="Edit link">✎</button>`;
-      linkCell.querySelector('.btn-link-edit').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
-    } else {
-      linkCell.innerHTML = `<button class="btn-link-add" data-id="${task.id}" title="Add link">+ Add</button>`;
-      linkCell.querySelector('.btn-link-add').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
-    }
+    linkCell.innerHTML = renderLinkCell(task.id, task.working_link);
+    const linkBtn = linkCell.querySelector('.btn-link-add, .btn-link-edit');
+    if (linkBtn) linkBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
   }
 
   row.classList.remove('row-updated');
@@ -718,6 +707,16 @@ function getStatusClass(status) {
   }
 }
 
+function renderLinkCell(taskId, url) {
+  if (!url) return `<button class="btn-link-add" data-id="${taskId}" title="Add link">+ Add</button>`;
+  let favicon = '';
+  try {
+    const domain = new URL(url).hostname;
+    favicon = `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" onerror="this.style.display='none'">`;
+  } catch (_) {}
+  return `${favicon}<a href="${url}" target="_blank" class="notion-link">Open ↗</a><button class="btn-link-edit" data-id="${taskId}" data-link="${url}" title="Edit link">✎</button>`;
+}
+
 function getPriorityLottieUrl(priority) {
   switch (priority) {
     case 'Low':    return 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f33f/lottie.json'; 
@@ -773,14 +772,9 @@ async function handleLinkEdit(e) {
   input.focus();
 
   const restoreCell = (link) => {
-    if (link) {
-      cell.innerHTML = `<a href="${link}" target="_blank" class="notion-link">Open ↗</a>
-        <button class="btn-link-edit" data-id="${id}" data-link="${link}" title="Edit link">✎</button>`;
-      cell.querySelector('.btn-link-edit').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
-    } else {
-      cell.innerHTML = `<button class="btn-link-add" data-id="${id}" title="Add link">+ Add</button>`;
-      cell.querySelector('.btn-link-add').addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
-    }
+    cell.innerHTML = renderLinkCell(id, link);
+    const linkBtn = cell.querySelector('.btn-link-add, .btn-link-edit');
+    if (linkBtn) linkBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
   };
 
   const save = async () => {
@@ -928,14 +922,9 @@ async function updateTaskProperty(property, value) {
     if (property === 'working_link') {
       const linkCell = row.querySelector('.col-link');
       if (linkCell) {
-        if (value) {
-          linkCell.innerHTML = `<a href="${value}" target="_blank" class="notion-link">Open ↗</a>
-                                <button class="btn-link-edit" data-id="${currentDetailTaskId}" data-link="${value}" title="Edit link">✎</button>`;
-          linkCell.querySelector('.btn-link-edit').addEventListener('click', handleLinkEdit);
-        } else {
-          linkCell.innerHTML = `<button class="btn-link-add" data-id="${currentDetailTaskId}" title="Add link">+ Add</button>`;
-          linkCell.querySelector('.btn-link-add').addEventListener('click', handleLinkEdit);
-        }
+        linkCell.innerHTML = renderLinkCell(currentDetailTaskId, value);
+        const linkBtn = linkCell.querySelector('.btn-link-add, .btn-link-edit');
+        if (linkBtn) linkBtn.addEventListener('click', handleLinkEdit);
       }
     }
   }

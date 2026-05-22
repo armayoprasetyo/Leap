@@ -109,6 +109,7 @@ let currentUserInfo = null;
 let pendingActivityInfo = null;
 let pendingActivityTimer = null;
 let isDragging = false;
+let isReordering = false;
 let appInitialized = false;
 let tasksLoaded = false;
 
@@ -439,6 +440,7 @@ function createTaskRow(task) {
 }
 
 async function saveTaskOrder() {
+  isReordering = true;
   const rows = taskTableBody.querySelectorAll('.notion-row');
 
   const updates = Array.from(rows).map((row, index) => {
@@ -449,8 +451,8 @@ async function saveTaskOrder() {
 
   await Promise.all(updates);
 
-  // Clear IDs setelah 3 detik (jaga-jaga realtime lambat)
-  setTimeout(() => positionUpdateIds.clear(), 3000);
+  // Clear both guards after 3s to absorb any slow realtime callbacks or DB triggers
+  setTimeout(() => { positionUpdateIds.clear(); isReordering = false; }, 3000);
 }
 
 function setupRowDrag(tr) {
@@ -547,6 +549,7 @@ function setupRealtime() {
 
   activityChannel = supabase.channel('activity-log-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
+      if (isReordering) return;
       const type = payload.new.type;
       if (type !== 'insert' && type !== 'update') return;
       addNotification(payload.new.message, type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);

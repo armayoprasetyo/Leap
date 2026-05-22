@@ -333,7 +333,7 @@ async function fetchTasks() {
 
   let tasks = [];
 
-  const { data, error } = await supabase.from('tasks').select('*').is('deleted_at', null).order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('tasks').select('*').is('deleted_at', null).is('completed_at', null).order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching tasks:', error);
     // Silent fail to mock data if table not available
@@ -397,7 +397,8 @@ function createTaskRow(task) {
         <button class="btn-actions" data-id="${task.id}" title="Actions">⋮</button>
         <div class="actions-dropdown hidden" id="dropdown-${task.id}">
           <button class="dropdown-item view-detail" data-id="${task.id}">👁 View Details</button>
-          <button class="dropdown-item delete-task" data-id="${task.id}">🗑 Delete</button>
+          <button class="dropdown-item mark-completed" data-id="${task.id}">✅ Mark as Completed</button>
+          <button class="dropdown-item delete-task" data-id="${task.id}" style="color:#dc2626;">🗑 Delete</button>
         </div>
       </div>
     </td>
@@ -418,6 +419,11 @@ function createTaskRow(task) {
   tr.querySelector('.view-detail').addEventListener('click', (e) => {
     e.stopPropagation();
     openDetailModal(task);
+    closeAllDropdowns();
+  });
+  tr.querySelector('.mark-completed').addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleMarkCompleted(e);
     closeAllDropdowns();
   });
   tr.querySelector('.delete-task').addEventListener('click', (e) => {
@@ -743,6 +749,12 @@ async function handleStatusChange(e) {
 }
 
 
+async function handleMarkCompleted(e) {
+  const id = e.target.getAttribute('data-id');
+  const { error } = await supabase.from('tasks').update({ completed_at: new Date().toISOString() }).eq('id', id);
+  if (error) { console.error('Error marking task completed:', error); return; }
+}
+
 async function handleDeleteTask(e) {
   if (!confirm('Are you sure you want to delete this task?')) return;
   const id = e.target.getAttribute('data-id');
@@ -987,52 +999,71 @@ navItems.forEach(item => {
 });
 
 // ── History ──────────────────────────────────────────
-async function fetchHistory() {
+let activeHistoryTab = 'completed';
+
+async function fetchHistory(tab = activeHistoryTab) {
+  activeHistoryTab = tab;
   const historyList = document.getElementById('historyList');
   if (!historyList) return;
-  historyList.innerHTML = `<div class="history-empty"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p>Loading history…</p></div>`;
 
+  // Sync tab UI
+  document.querySelectorAll('.history-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+  });
+
+  historyList.innerHTML = `<div class="history-empty"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p>Loading…</p></div>`;
+
+  const isCompleted = tab === 'completed';
+  const col = isCompleted ? 'completed_at' : 'deleted_at';
   const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .not('deleted_at', 'is', null)
-    .order('deleted_at', { ascending: false });
+    .from('tasks').select('*')
+    .not(col, 'is', null)
+    .order(col, { ascending: false });
 
   if (error) {
-    console.error('Error fetching history:', error);
-    historyList.innerHTML = `<div class="history-empty"><p>Failed to load history</p><span>${error.message}</span></div>`;
+    historyList.innerHTML = `<div class="history-empty"><p>Failed to load</p><span>${error.message}</span></div>`;
     return;
   }
+
+  const emptyLabel = isCompleted
+    ? ['No completed tasks', 'Mark a task as completed to see it here']
+    : ['No deleted tasks', 'Tasks you delete will appear here'];
 
   if (!data || data.length === 0) {
     historyList.innerHTML = `
       <div class="history-empty">
-        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        <p>No deleted tasks</p>
-        <span>Tasks you delete will appear here</span>
+        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>${emptyLabel[0]}</p><span>${emptyLabel[1]}</span>
       </div>`;
     return;
   }
 
   historyList.innerHTML = '';
-  data.forEach(task => historyList.appendChild(createHistoryItem(task)));
+  data.forEach(task => historyList.appendChild(createHistoryItem(task, isCompleted)));
 }
 
-function createHistoryItem(task) {
-  const deletedAt = new Date(task.deleted_at);
-  const timeAgo = formatTimeAgo(deletedAt);
-  const fullDate = deletedAt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+// Tab click listeners (delegated from document since page is hidden on load)
+document.addEventListener('click', (e) => {
+  const tab = e.target.closest('.history-tab');
+  if (tab) fetchHistory(tab.getAttribute('data-tab'));
+});
+
+function createHistoryItem(task, isCompleted = false) {
+  const dateVal = isCompleted ? task.completed_at : task.deleted_at;
+  const date = new Date(dateVal);
+  const timeAgo = formatTimeAgo(date);
+  const fullDate = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   const wrapper = document.createElement('div');
   wrapper.className = 'history-item';
   wrapper.innerHTML = `
     <div class="history-timeline">
-      <div class="history-dot"></div>
+      <div class="history-dot ${isCompleted ? 'history-dot-completed' : ''}"></div>
       <div class="history-line"></div>
     </div>
     <div class="history-card">
       <div class="history-card-top">
-        <span class="history-task-name">${task.name}</span>
+        <span class="history-task-name ${isCompleted ? 'history-task-completed' : ''}">${task.name}</span>
         <span class="history-time" title="${fullDate}">${timeAgo}</span>
       </div>
       <div class="history-card-meta">
@@ -1044,7 +1075,7 @@ function createHistoryItem(task) {
       <div class="history-card-actions">
         <button class="btn-restore" data-id="${task.id}">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Restore
+          Restore to Tasks
         </button>
         <button class="btn-delete-permanent" data-id="${task.id}">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -1053,13 +1084,14 @@ function createHistoryItem(task) {
       </div>
     </div>`;
 
-  wrapper.querySelector('.btn-restore').addEventListener('click', () => restoreTask(task.id, wrapper));
+  const restoreField = isCompleted ? 'completed_at' : 'deleted_at';
+  wrapper.querySelector('.btn-restore').addEventListener('click', () => restoreTask(task.id, wrapper, restoreField));
   wrapper.querySelector('.btn-delete-permanent').addEventListener('click', () => permanentDeleteTask(task.id, wrapper));
   return wrapper;
 }
 
-async function restoreTask(id, el) {
-  const { error } = await supabase.from('tasks').update({ deleted_at: null }).eq('id', id);
+async function restoreTask(id, el, field = 'deleted_at') {
+  const { error } = await supabase.from('tasks').update({ [field]: null }).eq('id', id);
   if (error) { console.error('Error restoring task:', error); return; }
   el.style.opacity = '0';
   el.style.transition = 'opacity 0.25s';

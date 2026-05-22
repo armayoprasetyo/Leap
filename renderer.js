@@ -714,7 +714,7 @@ function renderLinkCell(taskId, url) {
     const domain = new URL(url).hostname;
     favicon = `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" onerror="this.style.display='none'">`;
   } catch (_) {}
-  return `<div class="link-cell-content">${favicon}<a href="${url}" target="_blank" class="notion-link">Open ↗</a><button class="btn-link-edit" data-id="${taskId}" data-link="${url}" title="Edit link">✎</button></div>`;
+  return `${favicon}<a href="${url}" target="_blank" class="notion-link">Open ↗</a><button class="btn-link-edit" data-id="${taskId}" data-link="${url}" title="Edit link">✎</button>`;
 }
 
 function getPriorityLottieUrl(priority) {

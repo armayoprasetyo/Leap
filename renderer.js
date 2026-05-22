@@ -547,9 +547,9 @@ function setupRealtime() {
 
   activityChannel = supabase.channel('activity-log-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
-      const msg = payload.new.message || '';
-      if (msg.toLowerCase().includes('description')) return;
-      addNotification(payload.new.message, payload.new.type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);
+      const type = payload.new.type;
+      if (type !== 'insert' && type !== 'update') return;
+      addNotification(payload.new.message, type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);
     })
     .subscribe();
 }
@@ -640,6 +640,7 @@ async function fetchActivityLog() {
     .from('activity_log')
     .select('*')
     .gte('created_at', sevenDaysAgo.toISOString())
+    .in('type', ['insert', 'update'])
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -735,7 +736,6 @@ async function handleDeleteTask(e) {
   const taskName = document.querySelector(`.row-title[data-id="${id}"]`)?.textContent || 'Task';
   const { error } = await supabase.from('tasks').delete().eq('id', id);
   if (error) { console.error('Error deleting task:', error); return; }
-  logActivity(`deleted task "${taskName}"`, 'delete');
 }
 
 async function handleLinkEdit(e) {
@@ -890,6 +890,8 @@ async function updateTaskProperty(property, value) {
         badge.className = `priority-badge priority-${value.toLowerCase()}`;
         badge.innerHTML = `<span class="priority-emoji">${getPriorityEmoji(value)}</span> ${value}`;
       }
+      const taskName = row.querySelector('.row-title')?.textContent || 'Task';
+      logActivity(`updated "${taskName}" priority → ${value}`, 'update');
     }
     if (property === 'status') {
       const badge = row.querySelector('.status-badge');
@@ -898,6 +900,8 @@ async function updateTaskProperty(property, value) {
         const select = badge.querySelector('select');
         if (select) select.value = value;
       }
+      const taskName = row.querySelector('.row-title')?.textContent || 'Task';
+      logActivity(`updated "${taskName}" status → ${value}`, 'update');
     }
     if (property === 'company') {
       const text = row.querySelector('.col-company .notion-text');

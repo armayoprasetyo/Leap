@@ -552,7 +552,13 @@ function setupRealtime() {
       if (isReordering) return;
       const type = payload.new.type;
       if (type !== 'insert' && type !== 'update') return;
-      addNotification(payload.new.message, type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);
+      const msg = payload.new.message || '';
+      // Only accept messages written by client code:
+      // - update: must contain "→" (e.g. "updated "x" → Done" or "updated "x" priority → High")
+      // - insert: must start with "created task" (e.g. "created task "x"")
+      if (type === 'update' && !msg.includes('→')) return;
+      if (type === 'insert' && !msg.startsWith('created task')) return;
+      addNotification(msg, type, new Date(payload.new.created_at), payload.new.user_name, payload.new.user_avatar, payload.new.user_id);
     })
     .subscribe();
 }

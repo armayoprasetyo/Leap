@@ -837,7 +837,8 @@ taskForm.addEventListener('submit', async (e) => {
     working_link: document.getElementById('workingLink').value,
     description: document.getElementById('taskDescription').value,
     priority: document.getElementById('priority').value,
-    status: document.getElementById('status').value
+    status: document.getElementById('status').value,
+    position: 0
   };
 
   const { error } = await supabase.from('tasks').insert([newTask]);

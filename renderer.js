@@ -333,7 +333,7 @@ async function fetchTasks() {
 
   let tasks = [];
 
-  const { data, error } = await supabase.from('tasks').select('*').order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('tasks').select('*').is('deleted_at', null).order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching tasks:', error);
     // Silent fail to mock data if table not available
@@ -746,8 +746,7 @@ async function handleStatusChange(e) {
 async function handleDeleteTask(e) {
   if (!confirm('Are you sure you want to delete this task?')) return;
   const id = e.target.getAttribute('data-id');
-  const taskName = document.querySelector(`.row-title[data-id="${id}"]`)?.textContent || 'Task';
-  const { error } = await supabase.from('tasks').delete().eq('id', id);
+  const { error } = await supabase.from('tasks').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) { console.error('Error deleting task:', error); return; }
 }
 
@@ -975,7 +974,8 @@ function switchPage(pageId) {
 
   // Special logic per page
   if (pageId === 'profile') updateUserProfileUI();
-  if (pageId === 'notes') fetchNotes(); // Placeholder for now
+  if (pageId === 'notes') fetchNotes();
+  if (pageId === 'history') fetchHistory();
 }
 
 // Add Nav Listeners
@@ -985,6 +985,105 @@ navItems.forEach(item => {
     switchPage(pageId);
   });
 });
+
+// ── History ──────────────────────────────────────────
+async function fetchHistory() {
+  const historyList = document.getElementById('historyList');
+  if (!historyList) return;
+  historyList.innerHTML = `<div class="history-empty"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p>Loading history…</p></div>`;
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching history:', error);
+    historyList.innerHTML = `<div class="history-empty"><p>Failed to load history</p><span>${error.message}</span></div>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    historyList.innerHTML = `
+      <div class="history-empty">
+        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <p>No deleted tasks</p>
+        <span>Tasks you delete will appear here</span>
+      </div>`;
+    return;
+  }
+
+  historyList.innerHTML = '';
+  data.forEach(task => historyList.appendChild(createHistoryItem(task)));
+}
+
+function createHistoryItem(task) {
+  const deletedAt = new Date(task.deleted_at);
+  const timeAgo = formatTimeAgo(deletedAt);
+  const fullDate = deletedAt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'history-item';
+  wrapper.innerHTML = `
+    <div class="history-timeline">
+      <div class="history-dot"></div>
+      <div class="history-line"></div>
+    </div>
+    <div class="history-card">
+      <div class="history-card-top">
+        <span class="history-task-name">${task.name}</span>
+        <span class="history-time" title="${fullDate}">${timeAgo}</span>
+      </div>
+      <div class="history-card-meta">
+        <span class="status-badge ${getStatusClass(task.status)}" style="position:relative;width:auto;padding:0 10px;">${task.status || 'To Do'}</span>
+        <span class="priority-badge priority-${(task.priority || 'medium').toLowerCase()}">${task.priority || 'Medium'}</span>
+        ${task.assignee ? `<span class="history-assignee">${task.assignee}</span>` : ''}
+        ${task.company ? `<span class="history-company">· ${task.company}</span>` : ''}
+      </div>
+      <div class="history-card-actions">
+        <button class="btn-restore" data-id="${task.id}">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Restore
+        </button>
+        <button class="btn-delete-permanent" data-id="${task.id}">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Delete Permanently
+        </button>
+      </div>
+    </div>`;
+
+  wrapper.querySelector('.btn-restore').addEventListener('click', () => restoreTask(task.id, wrapper));
+  wrapper.querySelector('.btn-delete-permanent').addEventListener('click', () => permanentDeleteTask(task.id, wrapper));
+  return wrapper;
+}
+
+async function restoreTask(id, el) {
+  const { error } = await supabase.from('tasks').update({ deleted_at: null }).eq('id', id);
+  if (error) { console.error('Error restoring task:', error); return; }
+  el.style.opacity = '0';
+  el.style.transition = 'opacity 0.25s';
+  setTimeout(() => el.remove(), 250);
+}
+
+async function permanentDeleteTask(id, el) {
+  if (!confirm('Permanently delete this task? This cannot be undone.')) return;
+  const { error } = await supabase.from('tasks').delete().eq('id', id);
+  if (error) { console.error('Error permanently deleting task:', error); return; }
+  el.style.opacity = '0';
+  el.style.transition = 'opacity 0.25s';
+  setTimeout(() => el.remove(), 250);
+}
+
+function formatTimeAgo(date) {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+}
+// ─────────────────────────────────────────────────────
 
 async function fetchNotes() {
   console.log('Fetching notes...');

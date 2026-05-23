@@ -1824,9 +1824,20 @@ function updateGreeting() {
     lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f319/lottie.json'; // 🌙
   }
   const textEl = document.getElementById('greetingText');
-  const lottieEl = document.getElementById('greetingLottie');
   if (textEl) textEl.textContent = text;
-  if (lottieEl) lottieEl.setAttribute('src', lottieUrl);
+
+  const lottieEl = document.getElementById('greetingLottie');
+  if (lottieEl) {
+    const fresh = document.createElement('lottie-player');
+    fresh.id = 'greetingLottie';
+    fresh.setAttribute('src', lottieUrl);
+    fresh.setAttribute('background', 'transparent');
+    fresh.setAttribute('speed', '1');
+    fresh.setAttribute('loop', '');
+    fresh.setAttribute('autoplay', '');
+    fresh.style.cssText = 'width:72px;height:72px;flex-shrink:0;';
+    lottieEl.replaceWith(fresh);
+  }
 }
 
 // Start

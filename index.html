@@ -144,11 +144,13 @@
         <!-- Center: Task Cards -->
         <main class="task-main">
           <div class="task-main-header">
-            <div class="task-main-greeting">
-              <span class="greeting-text" id="greetingText">Good Morning</span>
-              <lottie-player id="greetingLottie" background="transparent" speed="1" style="width:26px;height:26px;flex-shrink:0;" loop autoplay></lottie-player>
+            <div class="task-header-group">
+              <div class="task-header-text">
+                <h2 class="task-main-title" id="greetingText">Good Morning</h2>
+                <p class="task-main-subtitle" id="taskMainTitle">All Tasks</p>
+              </div>
+              <lottie-player id="greetingLottie" background="transparent" speed="1" style="width:72px;height:72px;flex-shrink:0;" loop autoplay></lottie-player>
             </div>
-            <h2 class="task-main-title" id="taskMainTitle">All Tasks</h2>
           </div>
           <div class="task-cards-list" id="taskTableBody"></div>
           <div id="loadingIndicator" class="loading">Loading tasks…</div>

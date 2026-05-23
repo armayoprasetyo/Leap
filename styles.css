@@ -506,12 +506,15 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .task-card-name { font-size: 0.9375rem; font-weight: 500; color: #111827; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .task-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; row-gap: 4px; }
 .meta-divider { width: 1px; height: 12px; background: #e5e7eb; flex-shrink: 0; align-self: center; }
-.task-card-company { font-size: 0.75rem; color: #6b7280; background: #f3f4f6; padding: 2px 7px; border-radius: 20px; }
-.task-card-stakeholder { font-size: 0.75rem; color: #9ca3af; }
-.task-card-link { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #1c64f2; text-decoration: none; padding: 2px 7px; background: #eff6ff; border-radius: 4px; transition: background 0.1s; }
-.task-card-link:hover { background: #dbeafe; }
-/* Status badge in cards: needs explicit min-width so the abs-positioned select is visible */
-.task-card-status-badge { min-width: 90px !important; padding: 0 10px !important; }
+/* Plain meta items — no chip background */
+.card-meta-plain { font-size: 0.78rem; font-weight: 500; color: #374151; }
+.priority-plain { background: transparent !important; padding: 0 !important; border-radius: 0 !important; animation: none !important; font-size: 0.78rem !important; }
+/* Status badge in cards: plain, no colored pill */
+.task-card-status-badge { background: transparent !important; width: auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; border-radius: 0 !important; }
+.task-card-status-badge .status-select { position: static !important; width: auto !important; height: auto !important; text-align: left !important; font-size: 0.78rem !important; color: #374151 !important; }
+/* Link: favicon + plain text, no background pill */
+.task-card-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: #1c64f2; text-decoration: none; padding: 0; background: transparent; transition: color 0.1s; }
+.task-card-link:hover { color: #1e40af; text-decoration: underline; }
 
 /* Drag handle */
 .task-card-drag { flex-shrink: 0; opacity: 0; transition: opacity 0.15s; padding: 0 2px; }
@@ -756,12 +759,12 @@ html.dark .task-cards-list::-webkit-scrollbar-thumb { background: #374151; }
 html.dark .task-card { background: #1f2937; border-color: #374151; }
 html.dark .task-card:hover { border-color: #4b5563; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 html.dark .task-card-name { color: #f9fafb; }
-html.dark .task-card-company { color: #9ca3af; }
-html.dark .task-card-stakeholder { color: #6b7280; }
+html.dark .card-meta-plain { color: #9ca3af; }
+html.dark .task-card-status-badge .status-select { color: #9ca3af !important; }
 html.dark .task-check-circle { border-color: #4b5563; }
 html.dark .task-check-circle:hover { border-color: #22c55e; background: #22c55e; }
-html.dark .task-card-link { background: #1e3a5f; color: #60a5fa; }
-html.dark .task-card-link:hover { background: #1e40af; }
+html.dark .task-card-link { background: transparent; color: #60a5fa; }
+html.dark .task-card-link:hover { color: #93c5fd; text-decoration: underline; }
 html.dark .task-card-drag .drag-handle { color: #4b5563; }
 html.dark .meta-divider { background: #374151; }
 html.dark .task-card.row-dragging { background: #1e3a5f !important; }

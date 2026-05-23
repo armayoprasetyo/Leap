@@ -398,7 +398,7 @@ function createTaskRow(task) {
     </div>
     <div class="task-card-name" data-id="${task.id}">${task.name}</div>
     <div class="task-card-meta">${[
-      `<span class="chip-assignee card-meta-plain">${task.assignee || '—'}</span>`,
+      getAssigneeAvatarHTML(task.assignee || '—'),
       `<span class="priority-badge priority-${priority.toLowerCase()} priority-plain"><lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}</span>`,
       `<span class="status-badge ${getStatusClass(task.status)} task-card-status-badge"><select class="status-select" data-id="${task.id}"><option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option><option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option><option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option><option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option></select></span>`,
       task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()">${linkDomain ? `<img src="https://www.google.com/s2/favicons?domain=${linkDomain}&sz=32" width="16" height="16" style="border-radius:2px;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : ''}Link</a>` : null,
@@ -638,7 +638,14 @@ function updateRowInPlace(row, task) {
   if (nameEl) nameEl.textContent = task.name;
 
   const assigneeEl = row.querySelector('.chip-assignee');
-  if (assigneeEl) assigneeEl.textContent = task.assignee || '—';
+  if (assigneeEl) {
+    const member = teamMembers.find(m => m.full_name === task.assignee);
+    const initial = (task.assignee || '?').charAt(0).toUpperCase();
+    const bgMap = { A: '#1c64f2', S: '#7c3aed', R: '#059669', C: '#d97706' };
+    assigneeEl.style.background = bgMap[initial] || '#6b7280';
+    assigneeEl.title = task.assignee || '';
+    assigneeEl.innerHTML = `${initial}${member?.avatar_url ? `<img src="${member.avatar_url}" alt="${task.assignee}" onerror="this.style.display='none'">` : ''}`;
+  }
 
   const priorityEl = row.querySelector('.priority-badge');
   if (priorityEl) {
@@ -769,6 +776,17 @@ function renderLinkCell(taskId, url) {
     favicon = `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" onerror="this.style.display='none'">`;
   } catch (_) {}
   return `${favicon}<a href="${url}" target="_blank" class="notion-link">Open ↗</a><button class="btn-link-edit" data-id="${taskId}" data-link="${url}" title="Edit link">✎</button>`;
+}
+
+function getAssigneeAvatarHTML(name) {
+  const member = teamMembers.find(m => m.full_name === name);
+  const initial = (name || '?').charAt(0).toUpperCase();
+  const bgMap = { A: '#1c64f2', S: '#7c3aed', R: '#059669', C: '#d97706' };
+  const bg = bgMap[initial] || '#6b7280';
+  const img = member?.avatar_url
+    ? `<img src="${member.avatar_url}" alt="${name}" onerror="this.style.display='none'">`
+    : '';
+  return `<span class="chip-assignee card-assignee-avatar" style="background:${bg};" title="${name}">${initial}${img}</span>`;
 }
 
 function getPriorityLottieUrl(priority) {

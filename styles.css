@@ -510,6 +510,8 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .meta-divider { width: 1px; height: 12px; background: #e5e7eb; flex-shrink: 0; align-self: center; }
 /* Plain meta items — no chip background */
 .card-meta-plain { font-size: 0.78rem; font-weight: 500; color: #374151; background: transparent; padding: 0; border-radius: 0; }
+.card-assignee-avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; position: relative; font-size: 0.65rem; font-weight: 700; color: #fff; line-height: 1; }
+.card-assignee-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .priority-plain { background: transparent !important; padding: 0 !important; border-radius: 0 !important; animation: none !important; font-size: 0.78rem !important; }
 /* Status: hug content, no colored pill */
 .task-card-status-badge { display: inline-flex !important; background: transparent !important; width: auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; border-radius: 0 !important; }

@@ -447,9 +447,6 @@ function createTaskRow(task) {
     e.stopPropagation();
     handleMarkCompleted(e);
   });
-  const cardStatusSel = card.querySelector('.status-select');
-  cardStatusSel.addEventListener('change', handleStatusChange);
-  fitSelectWidth(cardStatusSel);
   card.querySelector('.btn-actions').addEventListener('click', (e) => {
     e.stopPropagation();
     toggleActionsMenu(task.id);

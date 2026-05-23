@@ -464,16 +464,18 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .task-main::after {
   content: '';
   position: absolute;
-  bottom: -20px;
-  right: -20px;
-  width: 420px;
-  height: 420px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cg fill='%231d4ed8' fill-opacity='0.18'%3E%3Cellipse cx='200' cy='380' rx='180' ry='30' fill='%231d4ed8' fill-opacity='0.06'/%3E%3Cpath d='M200 340 C200 340 160 300 150 250 C140 200 170 170 200 160 C230 170 260 200 250 250 C240 300 200 340 200 340Z' /%3E%3Cpath d='M200 300 C200 300 140 260 120 200 C100 140 130 100 160 90 C170 120 165 150 170 180 C175 210 190 240 200 260Z' fill='%231e40af'/%3E%3Cpath d='M200 300 C200 300 260 260 280 200 C300 140 270 100 240 90 C230 120 235 150 230 180 C225 210 210 240 200 260Z' fill='%231e40af'/%3E%3Cpath d='M155 180 C155 180 110 165 90 130 C70 95 85 60 110 55 C118 80 110 100 118 125 C126 150 145 165 155 180Z' fill='%2393c5fd'/%3E%3Cpath d='M245 180 C245 180 290 165 310 130 C330 95 315 60 290 55 C282 80 290 100 282 125 C274 150 255 165 245 180Z' fill='%2393c5fd'/%3E%3Cpath d='M175 230 C175 230 135 200 120 160 C105 120 125 90 148 85 C152 110 144 132 150 155 C156 178 170 205 175 230Z' fill='%2360a5fa'/%3E%3Cpath d='M225 230 C225 230 265 200 280 160 C295 120 275 90 252 85 C248 110 256 132 250 155 C244 178 230 205 225 230Z' fill='%2360a5fa'/%3E%3Crect x='196' y='160' width='8' height='185' rx='4' fill='%231e40af'/%3E%3C/g%3E%3C/svg%3E");
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 72%;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 400'><g fill='%231e3a8a'><path d='M-10 195 Q75 128 168 152 Q258 176 338 122 Q418 68 508 106 Q578 136 710 86 L710 400 L-10 400Z'/><circle cx='88' cy='70' r='32'/><circle cx='210' cy='140' r='5'/><circle cx='226' cy='132' r='5'/><circle cx='242' cy='140' r='5'/><circle cx='210' cy='156' r='5'/><circle cx='226' cy='148' r='5'/><circle cx='242' cy='156' r='5'/><polygon points='22,244 41,210 60,244'/><rect x='38' y='244' width='6' height='18'/><polygon points='8,260 27,228 46,260'/><rect x='24' y='260' width='6' height='16'/><circle cx='66' cy='253' r='18'/><rect x='63' y='262' width='6' height='15'/><rect x='88' y='208' width='50' height='127'/><circle cx='103' cy='224' r='4'/><circle cx='120' cy='224' r='4'/><circle cx='103' cy='242' r='4'/><circle cx='120' cy='242' r='4'/><rect x='145' y='168' width='43' height='167'/><rect x='152' y='182' width='5' height='122'/><rect x='163' y='182' width='5' height='122'/><rect x='174' y='182' width='5' height='122'/><rect x='194' y='196' width='48' height='139'/><polygon points='194,196 218,170 242,196'/><rect x='248' y='226' width='32' height='109'/><rect x='256' y='237' width='8' height='11'/><rect x='269' y='237' width='8' height='11'/><rect x='286' y='156' width='47' height='179'/><rect x='294' y='169' width='7' height='11'/><rect x='307' y='169' width='7' height='11'/><rect x='320' y='169' width='7' height='11'/><rect x='294' y='187' width='7' height='11'/><rect x='307' y='187' width='7' height='11'/><rect x='320' y='187' width='7' height='11'/><rect x='294' y='205' width='7' height='11'/><rect x='307' y='205' width='7' height='11'/><rect x='320' y='205' width='7' height='11'/><rect x='338' y='203' width='45' height='132'/><polygon points='338,203 360,176 383,203'/><rect x='348' y='217' width='10' height='14'/><rect x='364' y='217' width='10' height='14'/><rect x='390' y='160' width='58' height='175'/><rect x='396' y='174' width='46' height='6'/><rect x='396' y='191' width='46' height='6'/><rect x='396' y='208' width='46' height='6'/><rect x='396' y='225' width='46' height='6'/><rect x='454' y='233' width='34' height='102'/><rect x='494' y='203' width='46' height='132'/><rect x='502' y='217' width='8' height='11'/><rect x='516' y='217' width='8' height='11'/><rect x='530' y='217' width='8' height='11'/><polygon points='548,238 566,206 584,238'/><rect x='563' y='238' width='6' height='18'/><polygon points='572,228 590,198 608,228'/><rect x='587' y='228' width='6' height='18'/><polygon points='596,246 613,218 630,246'/><rect x='610' y='246' width='6' height='15'/><path d='M-10 298 Q78 268 168 286 Q268 306 368 276 Q468 246 558 270 Q628 286 710 263 L710 400 L-10 400Z'/><path d='M28 358 Q128 340 228 354 Q328 368 428 347 Q508 330 710 348' fill='none' stroke='%231e3a8a' stroke-width='15' stroke-linecap='round'/><circle cx='10' cy='330' r='22'/><circle cx='33' cy='318' r='18'/><circle cx='55' cy='334' r='16'/><circle cx='642' cy='326' r='20'/><circle cx='664' cy='314' r='16'/><circle cx='683' cy='328' r='14'/><circle cx='702' cy='320' r='18'/></g></svg>");
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: cover;
+  background-position: bottom center;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.7;
+  opacity: 0.1;
 }
 .task-main-header { padding: 28px 28px 20px; flex-shrink: 0; position: relative; z-index: 1; }
 .task-header-group { display: flex; align-items: center; justify-content: space-between; }
@@ -749,7 +751,7 @@ html.dark .sidebar-count { background: #374151; color: #9ca3af; }
 html.dark .sidebar-item.active .sidebar-count { background: #1e3a5f; color: #60a5fa; }
 
 html.dark .task-main { background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 100%); }
-html.dark .task-main::after { opacity: 0.35; filter: brightness(0.6); }
+html.dark .task-main::after { opacity: 0.08; filter: brightness(1.4); }
 html.dark .task-main-title { color: #bfdbfe; }
 html.dark .task-main-subtitle { color: #60a5fa; }
 html.dark .task-add-row { background: transparent; border-color: #1e3a5f; color: #1e3a5f; }

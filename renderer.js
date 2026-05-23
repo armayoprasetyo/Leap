@@ -397,26 +397,14 @@ function createTaskRow(task) {
     </div>
     <div class="task-card-body">
       <div class="task-card-name" data-id="${task.id}">${task.name}</div>
-      <div class="task-card-meta">
-        <span class="notion-chip chip-assignee">${task.assignee || '—'}</span>
-        <span class="priority-badge priority-${priority.toLowerCase()}">
-          <span class="priority-dot"></span>${priority}
-        </span>
-        <span class="status-badge ${getStatusClass(task.status)} task-card-status-badge">
-          <select class="status-select" data-id="${task.id}">
-            <option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option>
-            <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-            <option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option>
-            <option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option>
-          </select>
-        </span>
-        ${task.company ? `<span class="task-card-company">${task.company}</span>` : ''}
-        ${task.stake_holder ? `<span class="task-card-stakeholder">· ${task.stake_holder}</span>` : ''}
-        ${task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()">
-          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-          Link
-        </a>` : ''}
-      </div>
+      <div class="task-card-meta">${[
+        `<span class="notion-chip chip-assignee">${task.assignee || '—'}</span>`,
+        `<span class="priority-badge priority-${priority.toLowerCase()}"><lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}</span>`,
+        `<span class="status-badge ${getStatusClass(task.status)} task-card-status-badge"><select class="status-select" data-id="${task.id}"><option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option><option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option><option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option><option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option></select></span>`,
+        task.company ? `<span class="task-card-company">${task.company}</span>` : null,
+        task.stake_holder ? `<span class="task-card-stakeholder">${task.stake_holder}</span>` : null,
+        task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>Link</a>` : null,
+      ].filter(Boolean).join('<span class="meta-divider"></span>')}</div>
     </div>
     <div class="task-card-drag">
       <span class="drag-handle">⋮⋮</span>
@@ -656,7 +644,7 @@ function updateRowInPlace(row, task) {
   const priorityEl = row.querySelector('.priority-badge');
   if (priorityEl) {
     priorityEl.className = `priority-badge priority-${priority.toLowerCase()}`;
-    priorityEl.innerHTML = `<span class="priority-dot"></span>${priority}`;
+    priorityEl.innerHTML = `<lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}`;
   }
 
   const statusBadge = row.querySelector('.status-badge');
@@ -978,7 +966,7 @@ async function updateTaskProperty(property, value) {
       const badge = card.querySelector('.priority-badge');
       if (badge) {
         badge.className = `priority-badge priority-${value.toLowerCase()}`;
-        badge.innerHTML = `<span class="priority-dot"></span>${value}`;
+        badge.innerHTML = `<lottie-player src="${getPriorityLottieUrl(value)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${value}`;
       }
       logActivity(`updated "${nameEl.textContent}" priority → ${value}`, 'update');
     }

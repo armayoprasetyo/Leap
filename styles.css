@@ -180,15 +180,10 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 
 /* ── Priority Badges ── */
 .priority-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; letter-spacing: 0.2px; }
-.priority-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .priority-low    { background: #f0fdf4; color: #166534; }
-.priority-low .priority-dot    { background: #16a34a; }
 .priority-medium { background: #fefce8; color: #854d0e; }
-.priority-medium .priority-dot { background: #ca8a04; }
 .priority-high   { background: #fff7ed; color: #9a3412; }
-.priority-high .priority-dot   { background: #ea580c; }
 .priority-urgent { background: #fef2f2; color: #991b1b; animation: pulseUrgent 1.5s infinite; }
-.priority-urgent .priority-dot { background: #dc2626; }
 
 @keyframes pulseUrgent { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } 50% { box-shadow: 0 0 0 3px rgba(220,38,38,0.12); } }
 
@@ -492,7 +487,8 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 /* Card body */
 .task-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .task-card-name { font-size: 0.9375rem; font-weight: 500; color: #111827; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.task-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.task-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; row-gap: 4px; }
+.meta-divider { width: 1px; height: 12px; background: #e5e7eb; flex-shrink: 0; align-self: center; }
 .task-card-company { font-size: 0.75rem; color: #6b7280; background: #f3f4f6; padding: 2px 7px; border-radius: 20px; }
 .task-card-stakeholder { font-size: 0.75rem; color: #9ca3af; }
 .task-card-link { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #1c64f2; text-decoration: none; padding: 2px 7px; background: #eff6ff; border-radius: 4px; transition: background 0.1s; }
@@ -578,13 +574,9 @@ html.dark .status-select option { background: #1f2937; color: #f9fafb; }
 
 /* Priority badges */
 html.dark .priority-low    { background: #14532d; color: #86efac; }
-html.dark .priority-low .priority-dot    { background: #4ade80; }
 html.dark .priority-medium { background: #422006; color: #fbbf24; }
-html.dark .priority-medium .priority-dot { background: #fbbf24; }
 html.dark .priority-high   { background: #431407; color: #fdba74; }
-html.dark .priority-high .priority-dot   { background: #fb923c; }
 html.dark .priority-urgent { background: #450a0a; color: #fca5a5; }
-html.dark .priority-urgent .priority-dot { background: #f87171; }
 
 /* Actions dropdown */
 html.dark .btn-actions { color: #6b7280; }
@@ -752,6 +744,7 @@ html.dark .task-check-circle:hover { border-color: #22c55e; background: #22c55e;
 html.dark .task-card-link { background: #1e3a5f; color: #60a5fa; }
 html.dark .task-card-link:hover { background: #1e40af; }
 html.dark .task-card-drag .drag-handle { color: #4b5563; }
+html.dark .meta-divider { background: #374151; }
 html.dark .task-card.row-dragging { background: #1e3a5f !important; }
 @keyframes rowFlashCardDark { 0% { background-color: #1f2937; } 30% { background-color: #1e3a5f; } 100% { background-color: #1f2937; } }
 html.dark .task-card.row-updated { animation: rowFlashCardDark 0.7s ease-out; }

@@ -147,6 +147,8 @@ let isDragging = false;
 let isReordering = false;
 let appInitialized = false;
 let tasksLoaded = false;
+let allTasks = [];
+let currentFilter = 'all';
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -373,57 +375,54 @@ async function fetchTasks() {
     tasks = data;
   }
 
+  allTasks = tasks;
   loadingIndicator.style.display = 'none';
-  renderTasks(tasks);
+  renderTasks();
+  updateSidebarCounts();
 }
 
-// Helper to create a single row for a task
+// Helper to create a single task card
 function createTaskRow(task) {
   const priority = task.priority || 'Medium';
-  const tr = document.createElement('tr');
-  tr.className = 'notion-row';
-  tr.setAttribute('data-id', task.id);
-  tr.setAttribute('draggable', 'true');
-  
-  tr.innerHTML = `
-    <td class="col-drag"><span class="drag-handle">⋮⋮</span></td>
-    <td class="col-name">
-      <span class="row-title" data-id="${task.id}">${task.name}</span>
-    </td>
-    <td class="col-assignee">
-      <span class="notion-chip chip-assignee">${task.assignee || '—'}</span>
-    </td>
-    <td class="col-company">
-      <span class="notion-text">${task.company || '—'}</span>
-    </td>
-    <td class="col-stakeholder">
-      <span class="notion-text">${task.stake_holder || '—'}</span>
-    </td>
-    <td class="col-priority">
-      <span class="priority-badge priority-${priority.toLowerCase()}">
-        <lottie-player 
-          src="${getPriorityLottieUrl(priority)}" 
-          background="transparent" 
-          speed="1" 
-          style="width: 18px; height: 18px;" 
-          loop 
-          autoplay>
-        </lottie-player>
-        ${priority}
-      </span>
-    </td>
-    <td class="col-status">
-      <span class="status-badge ${getStatusClass(task.status)}">
-        <select class="status-select" data-id="${task.id}">
-          <option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option>
-          <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-          <option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option>
-          <option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option>
-        </select>
-      </span>
-    </td>
-    <td class="col-link">${renderLinkCell(task.id, task.working_link)}</td>
-    <td class="col-actions">
+  const card = document.createElement('div');
+  card.className = 'task-card notion-row';
+  card.setAttribute('data-id', task.id);
+  card.setAttribute('draggable', 'true');
+
+  card.innerHTML = `
+    <div class="task-card-check">
+      <button class="task-check-circle" data-id="${task.id}" title="Mark as complete">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </button>
+    </div>
+    <div class="task-card-body">
+      <div class="task-card-name" data-id="${task.id}">${task.name}</div>
+      <div class="task-card-meta">
+        <span class="notion-chip chip-assignee">${task.assignee || '—'}</span>
+        <span class="priority-badge priority-${priority.toLowerCase()}">
+          <lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;" loop autoplay></lottie-player>
+          ${priority}
+        </span>
+        <span class="status-badge ${getStatusClass(task.status)} task-card-status-badge">
+          <select class="status-select" data-id="${task.id}">
+            <option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option>
+            <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option>
+            <option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option>
+          </select>
+        </span>
+        ${task.company ? `<span class="task-card-company">${task.company}</span>` : ''}
+        ${task.stake_holder ? `<span class="task-card-stakeholder">· ${task.stake_holder}</span>` : ''}
+        ${task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()">
+          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          Link
+        </a>` : ''}
+      </div>
+    </div>
+    <div class="task-card-drag">
+      <span class="drag-handle">⋮⋮</span>
+    </div>
+    <div class="task-card-actions">
       <div class="actions-wrapper">
         <button class="btn-actions" data-id="${task.id}" title="Actions">
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -437,7 +436,7 @@ function createTaskRow(task) {
               </button>
             </li>
             <li>
-              <button class="dropdown-item mark-completed" data-id="${task.id}">
+              <button class="dropdown-item dropdown-mark-completed" data-id="${task.id}">
                 <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Mark as Completed
               </button>
@@ -452,46 +451,43 @@ function createTaskRow(task) {
           </ul>
         </div>
       </div>
-    </td>
+    </div>
   `;
 
-  // Attach internal row listeners
-  tr.addEventListener('click', (e) => {
-    if (e.target.closest('.status-select') || e.target.closest('.col-link') || 
-        e.target.closest('.actions-wrapper') || e.target.closest('.btn-icon')) return;
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.status-select') || e.target.closest('.task-card-link') ||
+        e.target.closest('.actions-wrapper') || e.target.closest('.task-check-circle')) return;
     openDetailModal(task);
   });
 
-  tr.querySelector('.status-select').addEventListener('change', handleStatusChange);
-  tr.querySelector('.btn-actions').addEventListener('click', (e) => {
+  card.querySelector('.task-check-circle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleMarkCompleted(e);
+  });
+  card.querySelector('.status-select').addEventListener('change', handleStatusChange);
+  card.querySelector('.btn-actions').addEventListener('click', (e) => {
     e.stopPropagation();
     toggleActionsMenu(task.id);
   });
-  tr.querySelector('.view-detail').addEventListener('click', (e) => {
+  card.querySelector('.view-detail').addEventListener('click', (e) => {
     e.stopPropagation();
     openDetailModal(task);
     closeAllDropdowns();
   });
-  tr.querySelector('.mark-completed').addEventListener('click', (e) => {
+  card.querySelector('.dropdown-mark-completed').addEventListener('click', (e) => {
     e.stopPropagation();
     handleMarkCompleted(e);
     closeAllDropdowns();
   });
-  tr.querySelector('.delete-task').addEventListener('click', (e) => {
+  card.querySelector('.delete-task').addEventListener('click', (e) => {
     e.stopPropagation();
     handleDeleteTask(e);
     closeAllDropdowns();
   });
 
-  const linkBtn = tr.querySelector('.btn-link-add, .btn-link-edit');
-  if (linkBtn) linkBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    handleLinkEdit(e);
-  });
+  setupRowDrag(card);
 
-  setupRowDrag(tr);
-
-  return tr;
+  return card;
 }
 
 async function saveTaskOrder() {
@@ -510,67 +506,83 @@ async function saveTaskOrder() {
   setTimeout(() => { positionUpdateIds.clear(); isReordering = false; }, 3000);
 }
 
-function setupRowDrag(tr) {
-  tr.addEventListener('dragstart', (e) => {
-    dragSrcRow = tr;
+function setupRowDrag(card) {
+  card.addEventListener('dragstart', (e) => {
+    if (currentFilter !== 'all') { e.preventDefault(); return; }
+    dragSrcRow = card;
     isDragging = true;
     e.dataTransfer.effectAllowed = 'move';
-    setTimeout(() => tr.classList.add('row-dragging'), 0);
+    setTimeout(() => card.classList.add('row-dragging'), 0);
   });
 
-  tr.addEventListener('dragover', (e) => {
+  card.addEventListener('dragover', (e) => {
     e.preventDefault();
-    if (!dragSrcRow || dragSrcRow === tr) return;
+    if (!dragSrcRow || dragSrcRow === card) return;
 
     document.querySelectorAll('.notion-row').forEach(r =>
       r.classList.remove('drag-over-top', 'drag-over-bottom')
     );
 
-    const rect = tr.getBoundingClientRect();
+    const rect = card.getBoundingClientRect();
     if (e.clientY < rect.top + rect.height / 2) {
-      tr.classList.add('drag-over-top');
+      card.classList.add('drag-over-top');
     } else {
-      tr.classList.add('drag-over-bottom');
+      card.classList.add('drag-over-bottom');
     }
   });
 
-  tr.addEventListener('dragleave', () => {
-    tr.classList.remove('drag-over-top', 'drag-over-bottom');
+  card.addEventListener('dragleave', () => {
+    card.classList.remove('drag-over-top', 'drag-over-bottom');
   });
 
-  tr.addEventListener('drop', (e) => {
+  card.addEventListener('drop', (e) => {
     e.preventDefault();
-    if (!dragSrcRow || dragSrcRow === tr) return;
+    if (!dragSrcRow || dragSrcRow === card) return;
 
-    const insertBefore = tr.classList.contains('drag-over-top');
-    tr.classList.remove('drag-over-top', 'drag-over-bottom');
+    const insertBefore = card.classList.contains('drag-over-top');
+    card.classList.remove('drag-over-top', 'drag-over-bottom');
 
     if (insertBefore) {
-      taskTableBody.insertBefore(dragSrcRow, tr);
+      taskTableBody.insertBefore(dragSrcRow, card);
     } else {
-      tr.after(dragSrcRow);
+      card.after(dragSrcRow);
     }
 
     saveTaskOrder();
   });
 
-  tr.addEventListener('dragend', () => {
-    tr.classList.remove('row-dragging');
+  card.addEventListener('dragend', () => {
+    card.classList.remove('row-dragging');
     document.querySelectorAll('.notion-row').forEach(r =>
       r.classList.remove('drag-over-top', 'drag-over-bottom')
     );
     dragSrcRow = null;
-    setTimeout(() => { isDragging = false; }, 500); // delay to absorb stray change events and slow realtime callbacks
+    setTimeout(() => { isDragging = false; }, 500);
   });
 }
 
-function renderTasks(tasks) {
+function renderTasks() {
   taskTableBody.innerHTML = '';
-  tasks.forEach(task => {
-    const tr = createTaskRow(task);
-    taskTableBody.appendChild(tr);
+  const filtered = currentFilter === 'all'
+    ? allTasks
+    : allTasks.filter(t => t.assignee === currentFilter);
+  filtered.forEach(task => {
+    taskTableBody.appendChild(createTaskRow(task));
   });
-  document.getElementById('addRowHint').onclick = () => document.getElementById('openModalBtn').click();
+  const titleEl = document.getElementById('taskMainTitle');
+  if (titleEl) titleEl.textContent = currentFilter === 'all' ? 'All Tasks' : currentFilter;
+}
+
+function updateSidebarCounts() {
+  const el = document.getElementById('filterCountAll');
+  if (el) el.textContent = allTasks.length || '';
+  ['Arma', 'Syafiq', 'Ridwan', 'Collaboration'].forEach(name => {
+    const countEl = document.getElementById(`filterCount${name}`);
+    if (countEl) {
+      const n = allTasks.filter(t => t.assignee === name).length;
+      countEl.textContent = n || '';
+    }
+  });
 }
 
 function setupRealtime() {
@@ -582,11 +594,18 @@ function setupRealtime() {
 
   tasksChannel = supabase.channel('custom-all-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
-      const tr = createTaskRow(payload.new);
-      tr.classList.add('row-enter');
-      taskTableBody.prepend(tr);
+      const newTask = payload.new;
+      allTasks.unshift(newTask);
+      updateSidebarCounts();
+      if (currentFilter === 'all' || newTask.assignee === currentFilter) {
+        const card = createTaskRow(newTask);
+        card.classList.add('row-enter');
+        taskTableBody.prepend(card);
+      }
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' }, (payload) => {
+      allTasks = allTasks.filter(t => t.id !== payload.old.id);
+      updateSidebarCounts();
       const row = document.querySelector(`.notion-row[data-id="${payload.old.id}"]`);
       if (row) {
         row.classList.add('row-exit');
@@ -596,6 +615,9 @@ function setupRealtime() {
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload) => {
       const updatedTask = payload.new;
       if (positionUpdateIds.has(updatedTask.id)) return;
+      const idx = allTasks.findIndex(t => t.id === updatedTask.id);
+      if (idx !== -1) allTasks[idx] = updatedTask;
+      updateSidebarCounts();
       const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
       if (!existingRow) return;
       if (updatedTask.completed_at || updatedTask.deleted_at) {
@@ -626,17 +648,11 @@ function setupRealtime() {
 function updateRowInPlace(row, task) {
   const priority = task.priority || 'Medium';
 
-  const nameEl = row.querySelector('.row-title');
+  const nameEl = row.querySelector('.task-card-name');
   if (nameEl) nameEl.textContent = task.name;
 
   const assigneeEl = row.querySelector('.chip-assignee');
   if (assigneeEl) assigneeEl.textContent = task.assignee || '—';
-
-  const companyEl = row.querySelector('.col-company .notion-text');
-  if (companyEl) companyEl.textContent = task.company || '—';
-
-  const stakeholderEl = row.querySelector('.col-stakeholder .notion-text');
-  if (stakeholderEl) stakeholderEl.textContent = task.stake_holder || '—';
 
   const priorityEl = row.querySelector('.priority-badge');
   if (priorityEl) {
@@ -651,15 +667,8 @@ function updateRowInPlace(row, task) {
   const statusBadge = row.querySelector('.status-badge');
   const statusSelect = row.querySelector('.status-select');
   if (statusBadge && statusSelect) {
-    statusBadge.className = `status-badge ${getStatusClass(task.status)}`;
+    statusBadge.className = `status-badge ${getStatusClass(task.status)} task-card-status-badge`;
     statusSelect.value = task.status;
-  }
-
-  const linkCell = row.querySelector('.col-link');
-  if (linkCell && !linkCell.querySelector('.inline-link-edit')) {
-    linkCell.innerHTML = renderLinkCell(task.id, task.working_link);
-    const linkBtn = linkCell.querySelector('.btn-link-add, .btn-link-edit');
-    if (linkBtn) linkBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLinkEdit(e); });
   }
 
   row.classList.remove('row-updated');
@@ -800,7 +809,7 @@ async function handleStatusChange(e) {
 
   const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
   if (error) { console.error('Error updating status:', error); return; }
-  const taskName = document.querySelector(`.row-title[data-id="${id}"]`)?.textContent || 'Task';
+  const taskName = document.querySelector(`.task-card-name[data-id="${id}"]`)?.textContent || 'Task';
   logActivity(`updated "${taskName}" → ${newStatus}`, 'update');
 }
 
@@ -959,51 +968,36 @@ async function updateTaskProperty(property, value) {
     return;
   }
 
-  // Update the table row in the background silently without a full fetch/re-render
-  const rowTitle = document.querySelector(`.row-title[data-id="${currentDetailTaskId}"]`);
-  if (rowTitle) {
-    const row = rowTitle.closest('tr');
-    if (!row) return;
+  // Update the task card in the background without a full re-render
+  const nameEl = document.querySelector(`.task-card-name[data-id="${currentDetailTaskId}"]`);
+  if (nameEl) {
+    const card = nameEl.closest('.task-card');
+    if (!card) return;
 
-    if (property === 'name') rowTitle.textContent = value;
+    if (property === 'name') nameEl.textContent = value;
     if (property === 'assignee') {
-      const chip = row.querySelector('.chip-assignee');
+      const chip = card.querySelector('.chip-assignee');
       if (chip) chip.textContent = value || '—';
+      const task = allTasks.find(t => t.id === currentDetailTaskId);
+      if (task) task.assignee = value;
+      updateSidebarCounts();
     }
     if (property === 'priority') {
-      const badge = row.querySelector('.priority-badge');
+      const badge = card.querySelector('.priority-badge');
       if (badge) {
         badge.className = `priority-badge priority-${value.toLowerCase()}`;
-        badge.innerHTML = `<span class="priority-emoji">${getPriorityEmoji(value)}</span> ${value}`;
+        badge.innerHTML = `<lottie-player src="${getPriorityLottieUrl(value)}" background="transparent" speed="1" style="width:18px;height:18px;" loop autoplay></lottie-player>${value}`;
       }
-      const taskName = row.querySelector('.row-title')?.textContent || 'Task';
-      logActivity(`updated "${taskName}" priority → ${value}`, 'update');
+      logActivity(`updated "${nameEl.textContent}" priority → ${value}`, 'update');
     }
     if (property === 'status') {
-      const badge = row.querySelector('.status-badge');
+      const badge = card.querySelector('.status-badge');
       if (badge) {
-        badge.className = `status-badge ${getStatusClass(value)}`;
+        badge.className = `status-badge ${getStatusClass(value)} task-card-status-badge`;
         const select = badge.querySelector('select');
         if (select) select.value = value;
       }
-      const taskName = row.querySelector('.row-title')?.textContent || 'Task';
-      logActivity(`updated "${taskName}" status → ${value}`, 'update');
-    }
-    if (property === 'company') {
-      const text = row.querySelector('.col-company .notion-text');
-      if (text) text.textContent = value || '—';
-    }
-    if (property === 'stake_holder') {
-      const text = row.querySelector('.col-stakeholder .notion-text');
-      if (text) text.textContent = value || '—';
-    }
-    if (property === 'working_link') {
-      const linkCell = row.querySelector('.col-link');
-      if (linkCell) {
-        linkCell.innerHTML = renderLinkCell(currentDetailTaskId, value);
-        const linkBtn = linkCell.querySelector('.btn-link-add, .btn-link-edit');
-        if (linkBtn) linkBtn.addEventListener('click', handleLinkEdit);
-      }
+      logActivity(`updated "${nameEl.textContent}" status → ${value}`, 'update');
     }
   }
 }
@@ -1835,6 +1829,20 @@ function hideMentionSuggestions() {
 // Start
 // Start the app after the DOM is ready to ensure elements exist
 document.addEventListener('DOMContentLoaded', () => {
+  // Sidebar filter listeners
+  document.querySelectorAll('.sidebar-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      renderTasks();
+    });
+  });
+
+  // Add row hint
+  const addRowHint = document.getElementById('addRowHint');
+  if (addRowHint) addRowHint.addEventListener('click', () => document.getElementById('openModalBtn').click());
+
   // Initiate session check
   checkSession();
 

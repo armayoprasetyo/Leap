@@ -104,31 +104,57 @@
 
     <!-- Task List Page -->
     <div id="tasklistPage" class="app-page">
-      <main class="app-main">
-        <div class="table-container">
-          <table class="notion-table" id="taskTable">
-            <thead>
-              <tr class="notion-header-row">
-                <th class="col-drag"></th>
-                <th class="col-name">Task Name</th>
-                <th class="col-assignee">Assignee</th>
-                <th class="col-company">Company</th>
-                <th class="col-stakeholder">Stakeholder</th>
-                <th class="col-priority">Priority</th>
-                <th class="col-status">Status</th>
-                <th class="col-link">Link</th>
-                <th class="col-actions"></th>
-              </tr>
-            </thead>
-            <tbody id="taskTableBody"></tbody>
-          </table>
+      <div class="tasklist-layout">
+
+        <!-- Left Sidebar -->
+        <aside class="task-sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-label">My Tasks</div>
+            <button class="sidebar-item active" data-filter="all">
+              <svg class="sidebar-item-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              <span class="sidebar-item-name">All Tasks</span>
+              <span class="sidebar-count" id="filterCountAll"></span>
+            </button>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-label">Assignee</div>
+            <button class="sidebar-item" data-filter="Arma">
+              <div class="sidebar-avatar" style="background:#1c64f2;">A</div>
+              <span class="sidebar-item-name">Arma</span>
+              <span class="sidebar-count" id="filterCountArma"></span>
+            </button>
+            <button class="sidebar-item" data-filter="Syafiq">
+              <div class="sidebar-avatar" style="background:#7c3aed;">S</div>
+              <span class="sidebar-item-name">Syafiq</span>
+              <span class="sidebar-count" id="filterCountSyafiq"></span>
+            </button>
+            <button class="sidebar-item" data-filter="Ridwan">
+              <div class="sidebar-avatar" style="background:#059669;">R</div>
+              <span class="sidebar-item-name">Ridwan</span>
+              <span class="sidebar-count" id="filterCountRidwan"></span>
+            </button>
+            <button class="sidebar-item" data-filter="Collaboration">
+              <div class="sidebar-avatar" style="background:#d97706;">C</div>
+              <span class="sidebar-item-name">Collaboration</span>
+              <span class="sidebar-count" id="filterCountCollaboration"></span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Center: Task Cards -->
+        <main class="task-main">
+          <div class="task-main-header">
+            <h2 class="task-main-title" id="taskMainTitle">All Tasks</h2>
+          </div>
+          <div class="task-cards-list" id="taskTableBody"></div>
           <div id="loadingIndicator" class="loading">Loading tasks…</div>
-          <div class="notion-add-row" id="addRowHint">
+          <div class="task-add-row" id="addRowHint">
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             New task
           </div>
-        </div>
-      </main>
+        </main>
+
+      </div>
     </div>
 
     <!-- Notes Page -->

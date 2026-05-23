@@ -396,15 +396,13 @@ function createTaskRow(task) {
         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </button>
     </div>
-    <div class="task-card-body">
-      <div class="task-card-name" data-id="${task.id}">${task.name}</div>
-      <div class="task-card-meta">${[
-        `<span class="chip-assignee card-meta-plain">${task.assignee || '—'}</span>`,
-        `<span class="priority-badge priority-${priority.toLowerCase()} priority-plain"><lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}</span>`,
-        `<span class="status-badge ${getStatusClass(task.status)} task-card-status-badge"><select class="status-select" data-id="${task.id}"><option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option><option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option><option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option><option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option></select></span>`,
-        task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()">${linkDomain ? `<img src="https://www.google.com/s2/favicons?domain=${linkDomain}&sz=32" width="16" height="16" style="border-radius:2px;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : ''}Link</a>` : null,
-      ].filter(Boolean).join('<span class="meta-divider"></span>')}</div>
-    </div>
+    <div class="task-card-name" data-id="${task.id}">${task.name}</div>
+    <div class="task-card-meta">${[
+      `<span class="chip-assignee card-meta-plain">${task.assignee || '—'}</span>`,
+      `<span class="priority-badge priority-${priority.toLowerCase()} priority-plain"><lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}</span>`,
+      `<span class="status-badge ${getStatusClass(task.status)} task-card-status-badge"><select class="status-select" data-id="${task.id}"><option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option><option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option><option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option><option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option></select></span>`,
+      task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()">${linkDomain ? `<img src="https://www.google.com/s2/favicons?domain=${linkDomain}&sz=32" width="16" height="16" style="border-radius:2px;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : ''}Link</a>` : null,
+    ].filter(Boolean).join('<span class="meta-divider"></span>')}</div>
     <div class="task-card-drag">
       <span class="drag-handle">⋮⋮</span>
     </div>

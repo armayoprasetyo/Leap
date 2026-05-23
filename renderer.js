@@ -1815,7 +1815,7 @@ function updateGreeting() {
     lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/26c5/lottie.json'; // ⛅
   } else if (hour >= 17 && hour < 21) {
     text = 'Good Evening';
-    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f307/lottie.json'; // 🌇
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/26c5/lottie.json'; // ⛅
   } else {
     text = 'Good Night';
     lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f31c/lottie.json'; // 🌜

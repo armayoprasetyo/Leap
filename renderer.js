@@ -400,8 +400,7 @@ function createTaskRow(task) {
       <div class="task-card-meta">
         <span class="notion-chip chip-assignee">${task.assignee || '—'}</span>
         <span class="priority-badge priority-${priority.toLowerCase()}">
-          <lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;" loop autoplay></lottie-player>
-          ${priority}
+          <span class="priority-dot"></span>${priority}
         </span>
         <span class="status-badge ${getStatusClass(task.status)} task-card-status-badge">
           <select class="status-select" data-id="${task.id}">
@@ -657,11 +656,7 @@ function updateRowInPlace(row, task) {
   const priorityEl = row.querySelector('.priority-badge');
   if (priorityEl) {
     priorityEl.className = `priority-badge priority-${priority.toLowerCase()}`;
-    priorityEl.innerHTML = `
-      <lottie-player src="${getPriorityLottieUrl(priority)}"
-        background="transparent" speed="1"
-        style="width:18px;height:18px;" loop autoplay>
-      </lottie-player>${priority}`;
+    priorityEl.innerHTML = `<span class="priority-dot"></span>${priority}`;
   }
 
   const statusBadge = row.querySelector('.status-badge');
@@ -983,7 +978,7 @@ async function updateTaskProperty(property, value) {
       const badge = card.querySelector('.priority-badge');
       if (badge) {
         badge.className = `priority-badge priority-${value.toLowerCase()}`;
-        badge.innerHTML = `<lottie-player src="${getPriorityLottieUrl(value)}" background="transparent" speed="1" style="width:18px;height:18px;" loop autoplay></lottie-player>${value}`;
+        badge.innerHTML = `<span class="priority-dot"></span>${value}`;
       }
       logActivity(`updated "${nameEl.textContent}" priority → ${value}`, 'update');
     }

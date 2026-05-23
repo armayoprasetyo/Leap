@@ -223,7 +223,7 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 
 /* ── Detail Drawer ── */
 .detail-modal { position: fixed; top: 12px; right: -640px; width: 640px; height: calc(100vh - 24px); max-width: calc(90vw - 12px); background: #fff; display: flex; flex-direction: column; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; padding: 0; overflow: hidden; }
-.modal-overlay:not(.hidden) .detail-modal { right: 12px; }
+.detail-modal.detail-panel-open { right: 12px; }
 
 .detail-header { padding: 32px 40px 16px; }
 .detail-actions-top { position: absolute; top: 16px; right: 16px; }
@@ -607,7 +607,7 @@ html.dark .form-group select option { background: #1f2937; color: #f9fafb; }
 html.dark .label-optional { color: #6b7280; }
 
 /* Detail Drawer */
-html.dark .detail-modal { background: #1f2937; border-color: #374151; }
+html.dark .detail-modal { background: #1f2937; border-color: #374151; box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
 html.dark .detail-title { color: #f9fafb; }
 html.dark .prop-label { color: #6b7280; }
 html.dark .prop-value { color: #e5e7eb; }

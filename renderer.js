@@ -942,18 +942,15 @@ async function openDetailModal(task) {
   
   detailDescription.innerHTML = task.description || '';
   
-  detailModal.classList.remove('hidden');
+  detailModal.classList.add('detail-panel-open');
 }
 
 function closeDetailModal() {
-  detailModal.classList.add('hidden');
+  detailModal.classList.remove('detail-panel-open');
   currentDetailTaskId = null;
 }
 
 closeDetailBtn.addEventListener('click', closeDetailModal);
-detailModal.addEventListener('click', (e) => {
-  if (e.target === detailModal) closeDetailModal();
-});
 
 // Auto-save logic helper
 async function updateTaskProperty(property, value) {

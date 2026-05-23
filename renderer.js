@@ -1812,16 +1812,16 @@ function updateGreeting() {
   let text, lottieUrl;
   if (hour >= 5 && hour < 12) {
     text = 'Good Morning';
-    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/2600_fe0f/lottie.json'; // ☀️
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f31e/lottie.json'; // 🌞
   } else if (hour >= 12 && hour < 17) {
     text = 'Good Afternoon';
     lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/26c5/lottie.json'; // ⛅
   } else if (hour >= 17 && hour < 21) {
     text = 'Good Evening';
-    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f306/lottie.json'; // 🌆
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f307/lottie.json'; // 🌇
   } else {
     text = 'Good Night';
-    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f319/lottie.json'; // 🌙
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f31c/lottie.json'; // 🌜
   }
   const textEl = document.getElementById('greetingText');
   if (textEl) textEl.textContent = text;

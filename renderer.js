@@ -400,7 +400,6 @@ function createTaskRow(task) {
     <div class="task-card-meta">${[
       getAssigneeAvatarHTML(task.assignee || '—'),
       `<span class="priority-badge priority-${priority.toLowerCase()} priority-plain"><lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}</span>`,
-      `<span class="status-badge ${getStatusClass(task.status)} task-card-status-badge"><select class="status-select" data-id="${task.id}"><option value="To Do" ${task.status === 'To Do' ? 'selected' : ''}>To Do</option><option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option><option value="Review" ${task.status === 'Review' ? 'selected' : ''}>Review</option><option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Done</option></select></span>`,
       task.working_link ? `<a href="${task.working_link}" target="_blank" class="task-card-link" onclick="event.stopPropagation()">${linkDomain ? `<img src="https://www.google.com/s2/favicons?domain=${linkDomain}&sz=32" width="16" height="16" style="border-radius:2px;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : ''}Link</a>` : null,
     ].filter(Boolean).join('<span class="meta-divider"></span>')}</div>
     <div class="task-card-drag">
@@ -651,14 +650,6 @@ function updateRowInPlace(row, task) {
   if (priorityEl) {
     priorityEl.className = `priority-badge priority-${priority.toLowerCase()}`;
     priorityEl.innerHTML = `<lottie-player src="${getPriorityLottieUrl(priority)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${priority}`;
-  }
-
-  const statusBadge = row.querySelector('.status-badge');
-  const statusSelect = row.querySelector('.status-select');
-  if (statusBadge && statusSelect) {
-    statusBadge.className = `status-badge ${getStatusClass(task.status)} task-card-status-badge`;
-    statusSelect.value = task.status;
-    fitSelectWidth(statusSelect);
   }
 
   row.classList.remove('row-updated');

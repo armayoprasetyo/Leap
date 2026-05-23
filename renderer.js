@@ -1807,9 +1807,33 @@ function hideMentionSuggestions() {
   mentionRange = null;
 }
 
+function updateGreeting() {
+  const hour = new Date().getHours();
+  let text, lottieUrl;
+  if (hour >= 5 && hour < 12) {
+    text = 'Good Morning';
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/2600_fe0f/lottie.json'; // ☀️
+  } else if (hour >= 12 && hour < 17) {
+    text = 'Good Afternoon';
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/26c5/lottie.json'; // ⛅
+  } else if (hour >= 17 && hour < 21) {
+    text = 'Good Evening';
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f306/lottie.json'; // 🌆
+  } else {
+    text = 'Good Night';
+    lottieUrl = 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f319/lottie.json'; // 🌙
+  }
+  const textEl = document.getElementById('greetingText');
+  const lottieEl = document.getElementById('greetingLottie');
+  if (textEl) textEl.textContent = text;
+  if (lottieEl) lottieEl.setAttribute('src', lottieUrl);
+}
+
 // Start
 // Start the app after the DOM is ready to ensure elements exist
 document.addEventListener('DOMContentLoaded', () => {
+  updateGreeting();
+
   // Sidebar filter listeners
   document.querySelectorAll('.sidebar-item').forEach(btn => {
     btn.addEventListener('click', () => {

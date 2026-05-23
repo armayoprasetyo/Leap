@@ -448,7 +448,9 @@ function createTaskRow(task) {
     e.stopPropagation();
     handleMarkCompleted(e);
   });
-  card.querySelector('.status-select').addEventListener('change', handleStatusChange);
+  const cardStatusSel = card.querySelector('.status-select');
+  cardStatusSel.addEventListener('change', handleStatusChange);
+  fitSelectWidth(cardStatusSel);
   card.querySelector('.btn-actions').addEventListener('click', (e) => {
     e.stopPropagation();
     toggleActionsMenu(task.id);
@@ -649,6 +651,7 @@ function updateRowInPlace(row, task) {
   if (statusBadge && statusSelect) {
     statusBadge.className = `status-badge ${getStatusClass(task.status)} task-card-status-badge`;
     statusSelect.value = task.status;
+    fitSelectWidth(statusSelect);
   }
 
   row.classList.remove('row-updated');
@@ -778,6 +781,17 @@ function getPriorityLottieUrl(priority) {
   }
 }
 
+// Resize a card status <select> to fit its selected option text
+function fitSelectWidth(sel) {
+  const text = sel.options[sel.selectedIndex]?.text || '';
+  const tmp = document.createElement('span');
+  tmp.style.cssText = 'position:fixed;top:-9999px;font:500 0.78rem/1 Inter,system-ui,sans-serif;white-space:nowrap;visibility:hidden;pointer-events:none;';
+  tmp.textContent = text;
+  document.body.appendChild(tmp);
+  sel.style.width = (tmp.offsetWidth + 22) + 'px';
+  document.body.removeChild(tmp);
+}
+
 // Event Handlers
 async function handleStatusChange(e) {
   if (isDragging) return;
@@ -786,6 +800,7 @@ async function handleStatusChange(e) {
   
   const badge = e.target.parentElement;
   badge.className = `status-badge ${getStatusClass(newStatus)}`;
+  fitSelectWidth(e.target);
 
   const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
   if (error) { console.error('Error updating status:', error); return; }

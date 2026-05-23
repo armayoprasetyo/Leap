@@ -1043,6 +1043,7 @@ function switchPage(pageId) {
   });
 
   // Special logic per page
+  if (pageId !== 'tasklist') closeDetailModal();
   if (pageId === 'profile') updateUserProfileUI();
   if (pageId === 'notes') fetchNotes();
   if (pageId === 'statistics') fetchStatistics();

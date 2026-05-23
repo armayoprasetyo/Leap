@@ -1022,12 +1022,6 @@ function switchPage(pageId) {
     }
   });
 
-  // Show/hide task filter sections in sidebar
-  const sidebarTaskFilters = document.getElementById('sidebarTaskFilters');
-  const sidebarAssigneeFilters = document.getElementById('sidebarAssigneeFilters');
-  if (sidebarTaskFilters) sidebarTaskFilters.style.display = pageId === 'tasklist' ? '' : 'none';
-  if (sidebarAssigneeFilters) sidebarAssigneeFilters.style.display = pageId === 'tasklist' ? '' : 'none';
-
   // Special logic per page
   if (pageId !== 'tasklist') closeDetailModal();
   if (pageId === 'profile') updateUserProfileUI();

@@ -102,6 +102,17 @@ const noteContent = document.getElementById('noteContent');
 const saveStatus = document.getElementById('saveStatus');
 const toolbarBtns = document.querySelectorAll('.toolbar-btn');
 
+const notesPanelGrid = document.getElementById('notesPanelGrid');
+const notesPanelListView = document.getElementById('notesPanelListView');
+const notesPanelEditorView = document.getElementById('notesPanelEditorView');
+const notesPanelAddBtn = document.getElementById('notesPanelAddBtn');
+const closeNotesPanelBtn = document.getElementById('closeNotesPanelBtn');
+const notesPanelBackBtn = document.getElementById('notesPanelBackBtn');
+const notesPanelDeleteBtn = document.getElementById('notesPanelDeleteBtn');
+const notesPanelTitle = document.getElementById('notesPanelTitle');
+const notesPanelContent = document.getElementById('notesPanelContent');
+const notesPanelSaveStatus = document.getElementById('notesPanelSaveStatus');
+
 
 
 // ── Dark Mode ─────────────────────────────────────────
@@ -1089,6 +1100,7 @@ function initPanelResize() {
 }
 
 async function openDetailModal(task) {
+  closeNotesSidePanel();
   currentDetailTaskId = task.id;
   detailTaskName.textContent = task.name;
   detailAssignee.value = task.assignee || 'Arma';
@@ -1217,7 +1229,12 @@ function switchPage(pageId) {
 navItems.forEach(item => {
   item.addEventListener('click', () => {
     const pageId = item.getAttribute('data-page');
-    switchPage(pageId);
+    if (pageId === 'notes') {
+      toggleNotesSidePanel();
+    } else {
+      closeNotesSidePanel();
+      switchPage(pageId);
+    }
   });
 });
 
@@ -1615,14 +1632,174 @@ if (deleteNoteBtn) deleteNoteBtn.addEventListener('click', async () => {
 if (noteTitle) noteTitle.addEventListener('input', triggerAutoSave);
 if (noteContent) noteContent.addEventListener('input', triggerAutoSave);
 
-// Toolbar logic
+// Toolbar logic (main note editor only — panel editor uses data-panel-command)
 toolbarBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     const command = btn.getAttribute('data-command');
+    if (!command) return;
     const value = btn.getAttribute('data-value') || null;
     document.execCommand(command, false, value);
     noteContent.focus();
     triggerAutoSave();
+  });
+});
+
+// ── Notes Side Panel ──────────────────────────────────
+let currentPanelNoteId = null;
+let panelSaveTimeout = null;
+let notesPanelOpen = false;
+
+function openNotesSidePanel() {
+  notesPanelOpen = true;
+  const panel = document.getElementById('notesSidePanel');
+  if (panel) panel.classList.add('notes-panel-open');
+  closeDetailModal();
+  // Stay on tasklist page, mark Notes nav active
+  pages.forEach(page => {
+    if (page.id !== 'tasklistPage') page.classList.add('hidden');
+  });
+  const tasklistPage = document.getElementById('tasklistPage');
+  if (tasklistPage) tasklistPage.classList.remove('hidden');
+  navItems.forEach(item => {
+    item.classList.toggle('active', item.getAttribute('data-page') === 'notes');
+  });
+  showNotesPanelListView();
+  fetchNotesPanel();
+}
+
+function closeNotesSidePanel() {
+  if (!notesPanelOpen) return;
+  notesPanelOpen = false;
+  const panel = document.getElementById('notesSidePanel');
+  if (panel) panel.classList.remove('notes-panel-open');
+  navItems.forEach(item => {
+    item.classList.toggle('active', item.getAttribute('data-page') === 'tasklist');
+  });
+}
+
+function toggleNotesSidePanel() {
+  if (notesPanelOpen) {
+    closeNotesSidePanel();
+  } else {
+    openNotesSidePanel();
+  }
+}
+
+function showNotesPanelListView() {
+  if (notesPanelListView) notesPanelListView.classList.remove('hidden');
+  if (notesPanelEditorView) notesPanelEditorView.classList.add('hidden');
+}
+
+function showNotesPanelEditorView() {
+  if (notesPanelListView) notesPanelListView.classList.add('hidden');
+  if (notesPanelEditorView) notesPanelEditorView.classList.remove('hidden');
+}
+
+async function fetchNotesPanel() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data, error } = await supabase
+    .from('notes').select('*').eq('user_id', user.id).order('updated_at', { ascending: false });
+  if (!error) renderNotesPanelGrid(data || []);
+}
+
+function renderNotesPanelGrid(notes) {
+  if (!notesPanelGrid) return;
+  if (notes.length === 0) {
+    notesPanelGrid.innerHTML = '<div class="notes-panel-empty">No notes yet.<br>Click "+ New" to start.</div>';
+    return;
+  }
+  notesPanelGrid.innerHTML = '';
+  notes.forEach(note => {
+    const card = document.createElement('div');
+    card.className = 'notes-panel-card';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = note.content || '';
+    const text = tmp.textContent || '';
+    const excerpt = text.substring(0, 100) + (text.length > 100 ? '...' : '');
+    const date = new Date(note.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    card.innerHTML = `
+      <h4>${note.title || 'Untitled'}</h4>
+      <p class="note-panel-excerpt">${excerpt || 'No content...'}</p>
+      <span class="note-panel-date">Updated ${date}</span>
+    `;
+    card.addEventListener('click', () => openNoteInPanel(note));
+    notesPanelGrid.appendChild(card);
+  });
+}
+
+function openNoteInPanel(note = null) {
+  currentPanelNoteId = note ? note.id : null;
+  if (notesPanelTitle) notesPanelTitle.value = note ? (note.title || '') : '';
+  if (notesPanelContent) notesPanelContent.innerHTML = note ? (note.content || '') : '';
+  if (notesPanelSaveStatus) notesPanelSaveStatus.textContent = note ? 'All changes saved' : 'New Note';
+  showNotesPanelEditorView();
+}
+
+async function savePanelNote() {
+  if (!notesPanelSaveStatus) return;
+  notesPanelSaveStatus.textContent = 'Saving...';
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const noteData = {
+    user_id: user.id,
+    title: notesPanelTitle ? notesPanelTitle.value || 'Untitled' : 'Untitled',
+    content: notesPanelContent ? notesPanelContent.innerHTML : '',
+    updated_at: new Date().toISOString()
+  };
+  let result;
+  if (currentPanelNoteId) {
+    result = await supabase.from('notes').update(noteData).eq('id', currentPanelNoteId);
+  } else {
+    result = await supabase.from('notes').insert([noteData]).select();
+    if (result.data && result.data[0]) currentPanelNoteId = result.data[0].id;
+  }
+  if (result.error) {
+    notesPanelSaveStatus.textContent = 'Error saving';
+  } else {
+    notesPanelSaveStatus.textContent = 'All changes saved';
+  }
+}
+
+function triggerPanelAutoSave() {
+  if (notesPanelSaveStatus) notesPanelSaveStatus.textContent = 'Unsaved changes';
+  if (panelSaveTimeout) clearTimeout(panelSaveTimeout);
+  panelSaveTimeout = setTimeout(savePanelNote, 1500);
+}
+
+if (notesPanelAddBtn) notesPanelAddBtn.addEventListener('click', () => openNoteInPanel());
+
+if (closeNotesPanelBtn) closeNotesPanelBtn.addEventListener('click', () => closeNotesSidePanel());
+
+if (notesPanelBackBtn) notesPanelBackBtn.addEventListener('click', () => {
+  showNotesPanelListView();
+  fetchNotesPanel();
+});
+
+if (notesPanelDeleteBtn) notesPanelDeleteBtn.addEventListener('click', async () => {
+  if (!currentPanelNoteId) {
+    showNotesPanelListView();
+    return;
+  }
+  if (confirm('Are you sure you want to delete this note?')) {
+    const { error } = await supabase.from('notes').delete().eq('id', currentPanelNoteId);
+    if (!error) {
+      showNotesPanelListView();
+      fetchNotesPanel();
+    }
+  }
+});
+
+if (notesPanelTitle) notesPanelTitle.addEventListener('input', triggerPanelAutoSave);
+if (notesPanelContent) notesPanelContent.addEventListener('input', triggerPanelAutoSave);
+
+document.querySelectorAll('[data-panel-command]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const command = btn.getAttribute('data-panel-command');
+    const value = btn.getAttribute('data-panel-value') || null;
+    document.execCommand(command, false, value);
+    if (notesPanelContent) notesPanelContent.focus();
+    triggerPanelAutoSave();
   });
 });
 

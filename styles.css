@@ -491,6 +491,14 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .task-add-row { padding: 12px 24px; color: #93c5fd; font-size: 0.8125rem; cursor: pointer; border-top: 1px solid #bfdbfe; transition: all 0.15s; display: flex; align-items: center; background: transparent; flex-shrink: 0; position: relative; z-index: 1; }
 .task-add-row:hover { background: rgba(219,234,254,0.5); color: #3b82f6; }
 
+/* Carry to Today banner */
+.carry-banner { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 28px; background: #eff6ff; border-bottom: 1px solid #bfdbfe; position: relative; z-index: 1; }
+.carry-banner-text { font-size: 0.8125rem; color: #1e40af; font-weight: 500; }
+.carry-today-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; background: #1c64f2; color: #fff; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+.carry-today-btn:hover { background: #1a56db; }
+html.dark .carry-banner { background: #1e3a5f; border-bottom-color: #1e40af; }
+html.dark .carry-banner-text { color: #93c5fd; }
+
 /* Date Tabs — Google Sheets style, top of center panel */
 .date-tabs-wrapper { flex-shrink: 0; display: flex; align-items: stretch; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; position: relative; z-index: 2; }
 .date-tabs-scroll { flex: 1; display: flex; align-items: flex-end; overflow-x: auto; scrollbar-width: none; }

@@ -544,6 +544,30 @@ function setupRowDrag(card) {
   });
 }
 
+function getTaskDate(task) {
+  if (task.task_date) return new Date(task.task_date);
+  return new Date(task.created_at || Date.now());
+}
+
+async function carryTasksToToday() {
+  const todayISO = new Date().toISOString().split('T')[0];
+  const tasksToCarry = allTasks.filter(t => getTaskDate(t).toDateString() === selectedDateStr);
+  if (!tasksToCarry.length) return;
+
+  const btn = document.getElementById('carryToTodayBtn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+  await Promise.all(tasksToCarry.map(t =>
+    supabase.from('tasks').update({ task_date: todayISO }).eq('id', t.id)
+  ));
+
+  tasksToCarry.forEach(t => { t.task_date = todayISO; });
+  selectedDateStr = new Date().toDateString();
+  renderTasks();
+
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+}
+
 function getTabDateLabel(date) {
   const todayStr = new Date().toDateString();
   const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
@@ -559,7 +583,7 @@ function renderDateTabs() {
   const todayStr = new Date().toDateString();
   const dateMap = {};
   allTasks.forEach(t => {
-    const d = new Date(t.created_at || Date.now());
+    const d = getTaskDate(t);
     const key = d.toDateString();
     if (!dateMap[key]) dateMap[key] = d;
   });
@@ -593,12 +617,22 @@ function renderTasks() {
     ? allTasks
     : allTasks.filter(t => t.assignee === currentFilter);
 
-  const dateTasks = filtered.filter(t =>
-    new Date(t.created_at || Date.now()).toDateString() === selectedDateStr
-  );
+  const dateTasks = filtered.filter(t => getTaskDate(t).toDateString() === selectedDateStr);
 
   taskTableBody.innerHTML = '';
   dateTasks.forEach(task => taskTableBody.appendChild(createTaskRow(task)));
+
+  const carryBanner = document.getElementById('carryBanner');
+  const carryBannerText = document.getElementById('carryBannerText');
+  if (carryBanner && carryBannerText) {
+    const isToday = selectedDateStr === new Date().toDateString();
+    if (!isToday && dateTasks.length > 0) {
+      carryBanner.style.display = 'flex';
+      carryBannerText.textContent = `${dateTasks.length} task${dateTasks.length !== 1 ? 's' : ''} on this day`;
+    } else {
+      carryBanner.style.display = 'none';
+    }
+  }
 
   const titleEl = document.getElementById('taskMainTitle');
   if (titleEl) titleEl.textContent = currentFilter === 'all' ? 'All Tasks' : currentFilter;
@@ -1919,6 +1953,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('tabArrowRight')?.addEventListener('click', () => {
     tabsScroll?.scrollBy({ left: 160, behavior: 'smooth' });
   });
+  document.getElementById('carryToTodayBtn')?.addEventListener('click', carryTasksToToday);
 
   // Sidebar filter listeners
   document.querySelectorAll('.sidebar-item').forEach(btn => {

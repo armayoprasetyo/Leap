@@ -1229,6 +1229,7 @@ function switchPage(pageId) {
 navItems.forEach(item => {
   item.addEventListener('click', () => {
     const pageId = item.getAttribute('data-page');
+    closeFab();
     if (pageId === 'notes') {
       toggleNotesSidePanel();
     } else {
@@ -1237,6 +1238,37 @@ navItems.forEach(item => {
     }
   });
 });
+
+// FAB toggle
+const fabMain = document.getElementById('fabMain');
+const fabIconOpen = document.getElementById('fabIconOpen');
+const fabIconClose = document.getElementById('fabIconClose');
+
+function openFab() {
+  floatingNav.classList.add('fab-open');
+  if (fabIconOpen) fabIconOpen.style.display = 'none';
+  if (fabIconClose) fabIconClose.style.display = '';
+}
+
+function closeFab() {
+  floatingNav.classList.remove('fab-open');
+  if (fabIconOpen) fabIconOpen.style.display = '';
+  if (fabIconClose) fabIconClose.style.display = 'none';
+}
+
+if (fabMain) {
+  fabMain.addEventListener('click', (e) => {
+    e.stopPropagation();
+    floatingNav.classList.contains('fab-open') ? closeFab() : openFab();
+  });
+}
+
+document.addEventListener('click', (e) => {
+  if (floatingNav && !floatingNav.contains(e.target)) closeFab();
+});
+
+const backFromStats = document.getElementById('backFromStats');
+if (backFromStats) backFromStats.addEventListener('click', () => switchPage('tasklist'));
 
 // ── Statistics ───────────────────────────────────────
 let statusChartInstance = null;

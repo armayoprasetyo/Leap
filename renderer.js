@@ -2036,18 +2036,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('carryToTodayBtn')?.addEventListener('click', carryTasksToToday);
   initPanelResize();
 
-  // FAB Speed Dial
-  const fabMainBtn = document.getElementById('fabMainBtn');
-  const fabContainer = document.getElementById('floatingNav');
-  fabMainBtn?.addEventListener('click', e => {
-    e.stopPropagation();
-    fabContainer?.classList.toggle('open');
-  });
-  document.addEventListener('click', () => fabContainer?.classList.remove('open'));
-  document.querySelectorAll('.fab-item-btn').forEach(btn => {
-    btn.addEventListener('click', () => fabContainer?.classList.remove('open'));
-  });
-
   // Sidebar filter listeners
   document.querySelectorAll('.sidebar-item').forEach(btn => {
     btn.addEventListener('click', () => {

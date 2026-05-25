@@ -366,22 +366,15 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 @keyframes spin { to { transform: rotate(360deg); } }
 .loader-content p { color: #9ca3af; font-size: 0.875rem; }
 
-/* ── FAB Speed Dial ── */
-.fab-container { position: absolute; bottom: 24px; right: 16px; display: flex; flex-direction: column; align-items: flex-end; z-index: 50; transition: opacity 0.3s, transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-.fab-container.nav-hidden { opacity: 0; transform: translateY(80px); pointer-events: none; }
-.fab-menu { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; margin-bottom: 12px; }
-.fab-speed-item { display: flex; align-items: center; gap: 10px; opacity: 0; transform: scale(0.5) translateY(12px); pointer-events: none; transition: opacity 0.18s var(--delay,0s), transform 0.32s cubic-bezier(0.34,1.56,0.64,1) var(--delay,0s); }
-.fab-container.open .fab-speed-item { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
-.fab-label { font-size: 0.72rem; font-weight: 600; color: #fff; background: rgba(17,24,39,0.72); padding: 4px 10px; border-radius: 6px; white-space: nowrap; backdrop-filter: blur(4px); user-select: none; }
-.fab-item-btn { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 1px solid #e5e7eb; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: background 0.15s, color 0.15s, box-shadow 0.15s; flex-shrink: 0; }
-.fab-item-btn:hover { background: #eff6ff; color: #1c64f2; border-color: #bfdbfe; }
-.fab-item-btn.active { background: #1c64f2; color: #fff; border-color: #1c64f2; box-shadow: 0 4px 12px rgba(28,100,242,0.35); }
-.fab-main-btn { width: 52px; height: 52px; border-radius: 50%; background: #1c64f2; border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(28,100,242,0.45); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s; flex-shrink: 0; }
-.fab-main-btn:hover { box-shadow: 0 6px 20px rgba(28,100,242,0.55); }
-.fab-container.open .fab-main-btn { transform: rotate(45deg); }
-html.dark .fab-item-btn { background: #1f2937; border-color: #374151; color: #9ca3af; }
-html.dark .fab-item-btn:hover { background: #1e3a5f; color: #60a5fa; border-color: #3b82f6; }
-html.dark .fab-item-btn.active { background: #1c64f2; color: #fff; border-color: #1c64f2; }
+/* ── Floating Nav ── */
+.nav-container { position: fixed; bottom: 24px; left: 0; right: 0; display: flex; justify-content: center; z-index: 2000; pointer-events: none; }
+.floating-nav { background: #fff; border: 1px solid #e5e7eb; padding: 6px; border-radius: 20px; display: flex; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); pointer-events: auto; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.floating-nav.nav-hidden { transform: translateY(80px); opacity: 0; pointer-events: none; }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 7px 16px; border-radius: 14px; background: transparent; border: none; color: #9ca3af; cursor: pointer; transition: all 0.2s; min-width: 68px; gap: 3px; }
+.nav-item:hover { background: #f3f4f6; color: #374151; }
+.nav-item.active { background: #1c64f2; color: #fff; box-shadow: 0 4px 12px rgba(28,100,242,0.3); }
+.nav-icon { display: flex; align-items: center; justify-content: center; }
+.nav-label { font-size: 0.625rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* ── Notes ── */
 .notes-header { padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; background: #fff; }

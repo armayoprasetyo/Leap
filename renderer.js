@@ -544,15 +544,64 @@ function setupRowDrag(card) {
 }
 
 function renderTasks() {
-  taskTableBody.innerHTML = '';
+  const todayStr = new Date().toDateString();
   const filtered = currentFilter === 'all'
     ? allTasks
     : allTasks.filter(t => t.assignee === currentFilter);
-  filtered.forEach(task => {
-    taskTableBody.appendChild(createTaskRow(task));
+
+  const todayTasks = filtered.filter(t => new Date(t.created_at || Date.now()).toDateString() === todayStr);
+  const pastTasks  = filtered.filter(t => new Date(t.created_at || Date.now()).toDateString() !== todayStr);
+
+  taskTableBody.innerHTML = '';
+  todayTasks.forEach(task => taskTableBody.appendChild(createTaskRow(task)));
+
+  const groups = {};
+  pastTasks.forEach(task => {
+    const d = new Date(task.created_at || Date.now());
+    const key = d.toDateString();
+    if (!groups[key]) groups[key] = { date: d, tasks: [] };
+    groups[key].tasks.push(task);
   });
+
+  const dateHistory = document.getElementById('dateHistory');
+  if (dateHistory) {
+    dateHistory.innerHTML = '';
+    Object.values(groups)
+      .sort((a, b) => b.date - a.date)
+      .forEach(({ date, tasks }) => dateHistory.appendChild(createDateGroup(date, tasks)));
+  }
+
   const titleEl = document.getElementById('taskMainTitle');
   if (titleEl) titleEl.textContent = currentFilter === 'all' ? 'All Tasks' : currentFilter;
+}
+
+function getDateLabel(date) {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
+}
+
+function createDateGroup(date, tasks) {
+  const group = document.createElement('div');
+  group.className = 'date-group';
+  group.innerHTML = `
+    <div class="date-group-header">
+      <div class="date-group-meta">
+        <span class="date-group-dot"></span>
+        <span class="date-group-label">${getDateLabel(date)}</span>
+        <span class="date-group-count">${tasks.length} task${tasks.length !== 1 ? 's' : ''}</span>
+      </div>
+      <button class="date-group-toggle" title="Expand">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+    </div>
+    <div class="date-group-tasks"></div>
+  `;
+  const tasksContainer = group.querySelector('.date-group-tasks');
+  tasks.forEach(task => tasksContainer.appendChild(createTaskRow(task)));
+  group.querySelector('.date-group-header').addEventListener('click', () => group.classList.toggle('expanded'));
+  return group;
 }
 
 function updateSidebarCounts() {

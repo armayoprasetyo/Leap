@@ -252,7 +252,7 @@ async function updateUserProfileUI() {
   }
 }
 
-const EXCLUDED_USERS = ['arma.product', 'arma.developer'];
+const EXCLUDED_USERS = ['armadevdesign@gmail.com', 'armaproduct@gmail.com'];
 
 async function fetchUsers() {
   const { data, error } = await supabase.from('profiles').select('*').order('full_name');

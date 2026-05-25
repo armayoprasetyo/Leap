@@ -257,6 +257,7 @@ async function fetchUsers() {
   if (!error && data) {
     teamMembers = data;
     updateAssigneeDropdowns();
+    renderSidebarAssignees();
   }
 }
 
@@ -638,13 +639,43 @@ function renderTasks() {
   if (titleEl) titleEl.textContent = currentFilter === 'all' ? 'All Tasks' : currentFilter;
 }
 
+function renderSidebarAssignees() {
+  const container = document.getElementById('sidebarAssigneeList');
+  if (!container) return;
+  const bgMap = { A: '#1c64f2', S: '#7c3aed', R: '#059669', C: '#d97706' };
+  container.innerHTML = '';
+  teamMembers.forEach(member => {
+    const initial = (member.full_name || '?').charAt(0).toUpperCase();
+    const bg = bgMap[initial] || '#6b7280';
+    const imgHtml = member.avatar_url
+      ? `<img src="${member.avatar_url}" alt="${member.full_name}" onerror="this.style.display='none'">`
+      : '';
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-item';
+    btn.setAttribute('data-filter', member.full_name);
+    btn.innerHTML = `
+      <div class="sidebar-avatar" style="background:${bg};">${initial}${imgHtml}</div>
+      <span class="sidebar-item-name">${member.full_name}</span>
+      <span class="sidebar-count" id="filterCount${member.id}"></span>
+    `;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = member.full_name;
+      renderTasks();
+    });
+    container.appendChild(btn);
+  });
+  updateSidebarCounts();
+}
+
 function updateSidebarCounts() {
   const el = document.getElementById('filterCountAll');
   if (el) el.textContent = allTasks.length || '';
-  ['Arma', 'Syafiq', 'Ridwan', 'Collaboration'].forEach(name => {
-    const countEl = document.getElementById(`filterCount${name}`);
+  teamMembers.forEach(member => {
+    const countEl = document.getElementById(`filterCount${member.id}`);
     if (countEl) {
-      const n = allTasks.filter(t => t.assignee === name).length;
+      const n = allTasks.filter(t => t.assignee === member.full_name).length;
       countEl.textContent = n || '';
     }
   });

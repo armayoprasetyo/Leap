@@ -367,7 +367,7 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .loader-content p { color: #9ca3af; font-size: 0.875rem; }
 
 /* ── FAB Speed Dial ── */
-.fab-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; align-items: flex-end; z-index: 2000; transition: opacity 0.3s, transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+.fab-container { position: absolute; bottom: 24px; right: 16px; display: flex; flex-direction: column; align-items: flex-end; z-index: 50; transition: opacity 0.3s, transform 0.3s cubic-bezier(0.4,0,0.2,1); }
 .fab-container.nav-hidden { opacity: 0; transform: translateY(80px); pointer-events: none; }
 .fab-menu { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; margin-bottom: 12px; }
 .fab-speed-item { display: flex; align-items: center; gap: 10px; opacity: 0; transform: scale(0.5) translateY(12px); pointer-events: none; transition: opacity 0.18s var(--delay,0s), transform 0.32s cubic-bezier(0.34,1.56,0.64,1) var(--delay,0s); }

@@ -257,9 +257,12 @@ const EXCLUDED_USERS = ['arma.product', 'arma.developer'];
 async function fetchUsers() {
   const { data, error } = await supabase.from('profiles').select('*').order('full_name');
   if (!error && data) {
-    teamMembers = data.filter(u =>
-      !EXCLUDED_USERS.includes(u.full_name) && !EXCLUDED_USERS.includes(u.email?.split('@')[0])
-    );
+    console.log('profiles raw:', data.map(u => ({ id: u.id, full_name: u.full_name, email: u.email })));
+    teamMembers = data.filter(u => {
+      const name = (u.full_name || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      return !EXCLUDED_USERS.some(ex => name.includes(ex) || email.includes(ex));
+    });
     updateAssigneeDropdowns();
     renderSidebarAssignees();
   }

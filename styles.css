@@ -491,16 +491,23 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .task-add-row { padding: 12px 24px; color: #93c5fd; font-size: 0.8125rem; cursor: pointer; border-top: 1px solid #bfdbfe; transition: all 0.15s; display: flex; align-items: center; background: transparent; flex-shrink: 0; position: relative; z-index: 1; }
 .task-add-row:hover { background: rgba(219,234,254,0.5); color: #3b82f6; }
 
-/* Date Tabs Bar — Google Sheets style */
-.date-tabs-bar { flex-shrink: 0; display: flex; align-items: flex-end; gap: 0; padding: 0; background: #f3f4f6; border-top: 1px solid #e5e7eb; overflow-x: auto; scrollbar-width: none; position: relative; z-index: 2; }
-.date-tabs-bar::-webkit-scrollbar { display: none; }
+/* Date Tabs — Google Sheets style, top of center panel */
+.date-tabs-wrapper { flex-shrink: 0; display: flex; align-items: stretch; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; position: relative; z-index: 2; }
+.date-tabs-scroll { flex: 1; display: flex; align-items: flex-end; overflow-x: auto; scrollbar-width: none; }
+.date-tabs-scroll::-webkit-scrollbar { display: none; }
 .date-tab { padding: 7px 16px 6px; font-size: 0.75rem; font-weight: 500; color: #6b7280; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 0; background: transparent; white-space: nowrap; transition: background 0.15s, color 0.15s; user-select: none; flex-shrink: 0; font-family: inherit; }
 .date-tab:hover:not(.active) { background: #e9eaec; color: #374151; }
 .date-tab.active { background: #fff; color: #1e40af; font-weight: 600; border-color: #e5e7eb; margin-bottom: -1px; padding-bottom: 7px; }
-html.dark .date-tabs-bar { background: #111827; border-top-color: #374151; }
+.date-tabs-arrows { display: flex; align-items: center; border-left: 1px solid #e5e7eb; flex-shrink: 0; }
+.date-tab-arrow-btn { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #9ca3af; cursor: pointer; transition: background 0.15s, color 0.15s; font-family: inherit; }
+.date-tab-arrow-btn:hover { background: #e9eaec; color: #374151; }
+html.dark .date-tabs-wrapper { background: #111827; border-bottom-color: #374151; }
 html.dark .date-tab { color: #6b7280; }
 html.dark .date-tab:hover:not(.active) { background: #1f2937; color: #9ca3af; }
 html.dark .date-tab.active { background: #1f2937; color: #60a5fa; border-color: #374151; }
+html.dark .date-tabs-arrows { border-left-color: #374151; }
+html.dark .date-tab-arrow-btn { color: #4b5563; }
+html.dark .date-tab-arrow-btn:hover { background: #1f2937; color: #9ca3af; }
 
 /* Task card */
 .task-card { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; position: relative; }

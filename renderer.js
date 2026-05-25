@@ -1912,6 +1912,14 @@ function updateGreeting() {
 document.addEventListener('DOMContentLoaded', () => {
   updateGreeting();
 
+  const tabsScroll = document.getElementById('dateTabsBar');
+  document.getElementById('tabArrowLeft')?.addEventListener('click', () => {
+    tabsScroll?.scrollBy({ left: -160, behavior: 'smooth' });
+  });
+  document.getElementById('tabArrowRight')?.addEventListener('click', () => {
+    tabsScroll?.scrollBy({ left: 160, behavior: 'smooth' });
+  });
+
   // Sidebar filter listeners
   document.querySelectorAll('.sidebar-item').forEach(btn => {
     btn.addEventListener('click', () => {

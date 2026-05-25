@@ -149,6 +149,7 @@ let appInitialized = false;
 let tasksLoaded = false;
 let allTasks = [];
 let currentFilter = 'all';
+let selectedDateStr = new Date().toDateString();
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -543,65 +544,64 @@ function setupRowDrag(card) {
   });
 }
 
-function renderTasks() {
+function getTabDateLabel(date) {
   const todayStr = new Date().toDateString();
+  const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
+  if (date.toDateString() === todayStr) return 'Today';
+  if (date.toDateString() === yesterdayStr) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function renderDateTabs() {
+  const bar = document.getElementById('dateTabsBar');
+  if (!bar) return;
+
+  const todayStr = new Date().toDateString();
+  const dateMap = {};
+  allTasks.forEach(t => {
+    const d = new Date(t.created_at || Date.now());
+    const key = d.toDateString();
+    if (!dateMap[key]) dateMap[key] = d;
+  });
+  if (!dateMap[todayStr]) dateMap[todayStr] = new Date();
+
+  const sorted = Object.values(dateMap).sort((a, b) => {
+    if (a.toDateString() === todayStr) return -1;
+    if (b.toDateString() === todayStr) return 1;
+    return b - a;
+  });
+
+  bar.innerHTML = '';
+  sorted.forEach(date => {
+    const key = date.toDateString();
+    const tab = document.createElement('button');
+    tab.className = 'date-tab' + (key === selectedDateStr ? ' active' : '');
+    tab.textContent = getTabDateLabel(date);
+    tab.addEventListener('click', () => {
+      selectedDateStr = key;
+      renderDateTabs();
+      renderTasks();
+    });
+    bar.appendChild(tab);
+  });
+}
+
+function renderTasks() {
+  renderDateTabs();
+
   const filtered = currentFilter === 'all'
     ? allTasks
     : allTasks.filter(t => t.assignee === currentFilter);
 
-  const todayTasks = filtered.filter(t => new Date(t.created_at || Date.now()).toDateString() === todayStr);
-  const pastTasks  = filtered.filter(t => new Date(t.created_at || Date.now()).toDateString() !== todayStr);
+  const dateTasks = filtered.filter(t =>
+    new Date(t.created_at || Date.now()).toDateString() === selectedDateStr
+  );
 
   taskTableBody.innerHTML = '';
-  todayTasks.forEach(task => taskTableBody.appendChild(createTaskRow(task)));
-
-  const groups = {};
-  pastTasks.forEach(task => {
-    const d = new Date(task.created_at || Date.now());
-    const key = d.toDateString();
-    if (!groups[key]) groups[key] = { date: d, tasks: [] };
-    groups[key].tasks.push(task);
-  });
-
-  const dateHistory = document.getElementById('dateHistory');
-  if (dateHistory) {
-    dateHistory.innerHTML = '';
-    Object.values(groups)
-      .sort((a, b) => b.date - a.date)
-      .forEach(({ date, tasks }) => dateHistory.appendChild(createDateGroup(date, tasks)));
-  }
+  dateTasks.forEach(task => taskTableBody.appendChild(createTaskRow(task)));
 
   const titleEl = document.getElementById('taskMainTitle');
   if (titleEl) titleEl.textContent = currentFilter === 'all' ? 'All Tasks' : currentFilter;
-}
-
-function getDateLabel(date) {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
-}
-
-function createDateGroup(date, tasks) {
-  const group = document.createElement('div');
-  group.className = 'date-group';
-  group.innerHTML = `
-    <div class="date-group-header">
-      <div class="date-group-meta">
-        <span class="date-group-dot"></span>
-        <span class="date-group-label">${getDateLabel(date)}</span>
-        <span class="date-group-count">${tasks.length} task${tasks.length !== 1 ? 's' : ''}</span>
-      </div>
-      <button class="date-group-toggle" title="Expand">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </button>
-    </div>
-    <div class="date-group-tasks"></div>
-  `;
-  const tasksContainer = group.querySelector('.date-group-tasks');
-  tasks.forEach(task => tasksContainer.appendChild(createTaskRow(task)));
-  group.querySelector('.date-group-header').addEventListener('click', () => group.classList.toggle('expanded'));
-  return group;
 }
 
 function updateSidebarCounts() {

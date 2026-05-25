@@ -492,9 +492,9 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .task-add-row:hover { background: rgba(219,234,254,0.5); color: #3b82f6; }
 
 /* Date Tabs Bar — Google Sheets style */
-.date-tabs-bar { flex-shrink: 0; display: flex; align-items: flex-end; gap: 0; padding: 0 12px; background: #f3f4f6; border-top: 1px solid #e5e7eb; overflow-x: auto; scrollbar-width: none; position: relative; z-index: 2; }
+.date-tabs-bar { flex-shrink: 0; display: flex; align-items: flex-end; gap: 0; padding: 0; background: #f3f4f6; border-top: 1px solid #e5e7eb; overflow-x: auto; scrollbar-width: none; position: relative; z-index: 2; }
 .date-tabs-bar::-webkit-scrollbar { display: none; }
-.date-tab { padding: 7px 16px 6px; font-size: 0.75rem; font-weight: 500; color: #6b7280; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; background: transparent; white-space: nowrap; transition: background 0.15s, color 0.15s; user-select: none; flex-shrink: 0; font-family: inherit; }
+.date-tab { padding: 7px 16px 6px; font-size: 0.75rem; font-weight: 500; color: #6b7280; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 0; background: transparent; white-space: nowrap; transition: background 0.15s, color 0.15s; user-select: none; flex-shrink: 0; font-family: inherit; }
 .date-tab:hover:not(.active) { background: #e9eaec; color: #374151; }
 .date-tab.active { background: #fff; color: #1e40af; font-weight: 600; border-color: #e5e7eb; margin-bottom: -1px; padding-bottom: 7px; }
 html.dark .date-tabs-bar { background: #111827; border-top-color: #374151; }

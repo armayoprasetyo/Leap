@@ -1049,6 +1049,45 @@ taskModal.addEventListener('click', (e) => {
 // Detail Modal Logic
 let currentDetailTaskId = null;
 
+function initPanelResize() {
+  const handle = document.getElementById('panelResizeHandle');
+  const container = document.getElementById('detailModal');
+  if (!handle || !container) return;
+
+  let isResizing = false;
+  let startX = 0;
+  let startWidth = 0;
+  const MIN_WIDTH = 280;
+  const MAX_WIDTH = 720;
+
+  handle.addEventListener('mousedown', e => {
+    isResizing = true;
+    startX = e.clientX;
+    startWidth = container.offsetWidth;
+    handle.classList.add('resizing');
+    container.style.transition = 'none';
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!isResizing) return;
+    const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + (startX - e.clientX)));
+    container.style.width = newWidth + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isResizing) return;
+    isResizing = false;
+    handle.classList.remove('resizing');
+    container.style.transition = '';
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    localStorage.setItem('detailPanelWidth', container.offsetWidth);
+  });
+}
+
 async function openDetailModal(task) {
   currentDetailTaskId = task.id;
   detailTaskName.textContent = task.name;
@@ -1061,14 +1100,17 @@ async function openDetailModal(task) {
 
   const dateObj = task.created_at ? new Date(task.created_at) : new Date();
   detailCreatedAt.textContent = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  
+
   detailDescription.innerHTML = task.description || '';
-  
+
+  const savedWidth = parseInt(localStorage.getItem('detailPanelWidth'));
+  if (savedWidth >= 280) detailModal.style.width = savedWidth + 'px';
   detailModal.classList.add('detail-panel-open');
 }
 
 function closeDetailModal() {
   detailModal.classList.remove('detail-panel-open');
+  detailModal.style.width = '';
   currentDetailTaskId = null;
 }
 
@@ -1992,6 +2034,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabsScroll?.scrollBy({ left: 160, behavior: 'smooth' });
   });
   document.getElementById('carryToTodayBtn')?.addEventListener('click', carryTasksToToday);
+  initPanelResize();
 
   // Sidebar filter listeners
   document.querySelectorAll('.sidebar-item').forEach(btn => {

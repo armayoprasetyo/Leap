@@ -161,6 +161,8 @@ let tasksLoaded = false;
 let allTasks = [];
 let currentFilter = 'all';
 let selectedDateStr = new Date().toDateString();
+let carrySelectionMode = false;
+let selectedCarryIds = new Set();
 
 // Mention System Variables
 const mentionSuggestions = document.getElementById('mentionSuggestions');
@@ -410,7 +412,10 @@ function createTaskRow(task) {
   card.setAttribute('data-id', task.id);
   card.setAttribute('draggable', 'true');
 
+  if (carrySelectionMode) card.classList.add('carry-selectable');
+
   card.innerHTML = `
+    ${carrySelectionMode ? `<div class="carry-check-col"><input type="checkbox" class="carry-checkbox" data-id="${task.id}"${selectedCarryIds.has(task.id) ? ' checked' : ''}></div>` : ''}
     <div class="task-card-check">
       <button class="task-check-circle" data-id="${task.id}" title="Mark as complete">
         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -458,10 +463,28 @@ function createTaskRow(task) {
   `;
 
   card.addEventListener('click', (e) => {
+    if (carrySelectionMode) {
+      if (e.target.closest('.actions-wrapper') || e.target.closest('.carry-checkbox')) return;
+      const cb = card.querySelector('.carry-checkbox');
+      if (cb) {
+        cb.checked = !cb.checked;
+        cb.checked ? selectedCarryIds.add(task.id) : selectedCarryIds.delete(task.id);
+        updateCarrySelectionBanner();
+      }
+      return;
+    }
     if (e.target.closest('.status-select') || e.target.closest('.task-card-link') ||
         e.target.closest('.actions-wrapper') || e.target.closest('.task-check-circle')) return;
     openDetailModal(task);
   });
+
+  if (carrySelectionMode) {
+    card.querySelector('.carry-checkbox').addEventListener('change', (e) => {
+      e.stopPropagation();
+      e.target.checked ? selectedCarryIds.add(task.id) : selectedCarryIds.delete(task.id);
+      updateCarrySelectionBanner();
+    });
+  }
 
   card.querySelector('.task-check-circle').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -568,23 +591,47 @@ function getTaskDate(task) {
   return new Date(task.created_at || Date.now());
 }
 
-async function carryTasksToToday() {
+function enterCarrySelectionMode() {
+  carrySelectionMode = true;
+  selectedCarryIds.clear();
+  renderTasks();
+}
+
+function exitCarrySelectionMode() {
+  carrySelectionMode = false;
+  selectedCarryIds.clear();
+  renderTasks();
+}
+
+function updateCarrySelectionBanner() {
+  const textEl = document.getElementById('carryBannerText');
+  const confirmBtn = document.getElementById('carryConfirmBtn');
+  const dateTasks = allTasks.filter(t => getTaskDate(t).toDateString() === selectedDateStr);
+  if (textEl) textEl.textContent = `${selectedCarryIds.size} of ${dateTasks.length} selected`;
+  if (confirmBtn) confirmBtn.disabled = selectedCarryIds.size === 0;
+}
+
+async function carryTasksToToday(idsToCarry = null) {
   const todayISO = new Date().toISOString().split('T')[0];
-  const tasksToCarry = allTasks.filter(t => getTaskDate(t).toDateString() === selectedDateStr);
+  const tasksToCarry = idsToCarry
+    ? allTasks.filter(t => idsToCarry.has(t.id))
+    : allTasks.filter(t => getTaskDate(t).toDateString() === selectedDateStr);
   if (!tasksToCarry.length) return;
 
-  const btn = document.getElementById('carryToTodayBtn');
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  const allBtns = ['carryToTodayBtn', 'carryConfirmBtn', 'carrySelectBtn'].map(id => document.getElementById(id)).filter(Boolean);
+  allBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
 
   await Promise.all(tasksToCarry.map(t =>
     supabase.from('tasks').update({ task_date: todayISO }).eq('id', t.id)
   ));
 
   tasksToCarry.forEach(t => { t.task_date = todayISO; });
+  carrySelectionMode = false;
+  selectedCarryIds.clear();
   selectedDateStr = new Date().toDateString();
   renderTasks();
 
-  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  allBtns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
 }
 
 function getTabDateLabel(date) {
@@ -622,6 +669,8 @@ function renderDateTabs() {
     tab.textContent = getTabDateLabel(date);
     tab.addEventListener('click', () => {
       selectedDateStr = key;
+      carrySelectionMode = false;
+      selectedCarryIds.clear();
       renderDateTabs();
       renderTasks();
     });
@@ -647,9 +696,21 @@ function renderTasks() {
     const isToday = selectedDateStr === new Date().toDateString();
     if (!isToday && dateTasks.length > 0) {
       carryBanner.style.display = 'flex';
-      carryBannerText.textContent = `${dateTasks.length} task${dateTasks.length !== 1 ? 's' : ''} on this day`;
+      if (carrySelectionMode) {
+        carryBannerText.textContent = `${selectedCarryIds.size} of ${dateTasks.length} selected`;
+        document.getElementById('carryBannerDefault').style.display = 'none';
+        document.getElementById('carryBannerSelection').style.display = 'flex';
+        const confirmBtn = document.getElementById('carryConfirmBtn');
+        if (confirmBtn) confirmBtn.disabled = selectedCarryIds.size === 0;
+      } else {
+        carryBannerText.textContent = `${dateTasks.length} task${dateTasks.length !== 1 ? 's' : ''} on this day`;
+        document.getElementById('carryBannerDefault').style.display = 'flex';
+        document.getElementById('carryBannerSelection').style.display = 'none';
+      }
     } else {
       carryBanner.style.display = 'none';
+      carrySelectionMode = false;
+      selectedCarryIds.clear();
     }
   }
 
@@ -868,7 +929,15 @@ function toggleActionsMenu(id) {
   const dropdown = document.getElementById(`dropdown-${id}`);
   const isHidden = dropdown.classList.contains('hidden');
   closeAllDropdowns();
-  if (isHidden) dropdown.classList.remove('hidden');
+  if (isHidden) {
+    const btn = document.querySelector(`.btn-actions[data-id="${id}"]`);
+    const rect = btn.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+    dropdown.style.left = 'auto';
+    dropdown.classList.remove('hidden');
+  }
 }
 
 function closeAllDropdowns() {
@@ -2242,7 +2311,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('tabArrowRight')?.addEventListener('click', () => {
     tabsScroll?.scrollBy({ left: 160, behavior: 'smooth' });
   });
-  document.getElementById('carryToTodayBtn')?.addEventListener('click', carryTasksToToday);
+  document.getElementById('carryToTodayBtn')?.addEventListener('click', () => carryTasksToToday(null));
+  document.getElementById('carrySelectBtn')?.addEventListener('click', enterCarrySelectionMode);
+  document.getElementById('carryConfirmBtn')?.addEventListener('click', () => carryTasksToToday(selectedCarryIds));
+  document.getElementById('carryCancelBtn')?.addEventListener('click', exitCarrySelectionMode);
   initPanelResize();
 
   // Sidebar filter listeners

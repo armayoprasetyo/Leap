@@ -191,7 +191,7 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .actions-wrapper { position: relative; display: flex; justify-content: center; }
 .btn-actions { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #9ca3af; cursor: pointer; border-radius: 6px; border: none; background: transparent; transition: background 0.15s, color 0.15s; }
 .btn-actions:hover { background: #f3f4f6; color: #374151; }
-.actions-dropdown { position: absolute; top: calc(100% + 4px); right: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; min-width: 188px; z-index: 500; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05); padding: 4px; }
+.actions-dropdown { position: fixed; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; min-width: 188px; z-index: 9999; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05); padding: 4px; }
 .dropdown-list { list-style: none; margin: 0; padding: 0; }
 .dropdown-divider { height: 1px; background: #f3f4f6; margin: 4px 0; }
 .dropdown-item { width: 100%; text-align: left; background: transparent; border: none; color: #374151; padding: 8px 12px; font-size: 0.875rem; font-weight: 500; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.1s; font-family: inherit; white-space: nowrap; }
@@ -526,10 +526,23 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 /* Carry to Today banner */
 .carry-banner { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 28px; background: #eff6ff; border-bottom: 1px solid #bfdbfe; position: relative; z-index: 1; }
 .carry-banner-text { font-size: 0.8125rem; color: #1e40af; font-weight: 500; }
+.carry-banner-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .carry-today-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; background: #1c64f2; color: #fff; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
-.carry-today-btn:hover { background: #1a56db; }
+.carry-today-btn:hover:not(:disabled) { background: #1a56db; }
+.carry-today-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.carry-select-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; background: transparent; color: #1c64f2; border: 1.5px solid #1c64f2; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+.carry-select-btn:hover { background: #dbeafe; }
+.carry-cancel-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; background: transparent; color: #6b7280; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.15s; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+.carry-cancel-btn:hover { background: #f3f4f6; }
+.carry-check-col { display: flex; align-items: center; flex-shrink: 0; padding-right: 4px; }
+.carry-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #1c64f2; flex-shrink: 0; }
+.task-card.carry-selectable { cursor: default; }
 html.dark .carry-banner { background: #1e3a5f; border-bottom-color: #1e40af; }
 html.dark .carry-banner-text { color: #93c5fd; }
+html.dark .carry-select-btn { color: #93c5fd; border-color: #3b82f6; }
+html.dark .carry-select-btn:hover { background: #1e3a5f; }
+html.dark .carry-cancel-btn { color: #9ca3af; border-color: #374151; }
+html.dark .carry-cancel-btn:hover { background: #374151; }
 
 /* Date Tabs — Google Sheets style, top of center panel */
 .date-tabs-wrapper { flex-shrink: 0; display: flex; align-items: stretch; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; position: relative; z-index: 2; }

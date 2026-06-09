@@ -1454,8 +1454,21 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
 lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) closeLightbox(); });
 
-// Ctrl+V paste screenshot — works globally whenever a task is open
+// Ctrl+V paste inside create modal → add to pending files
+taskModal.addEventListener('paste', (e) => {
+  if (taskModal.classList.contains('hidden')) return;
+  const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  e.stopPropagation();
+  e.preventDefault();
+  addModalFiles(files);
+});
+
+// Ctrl+V paste screenshot — works globally whenever a task detail is open
 document.addEventListener('paste', async (e) => {
+  if (!taskModal.classList.contains('hidden')) return; // modal takes priority
   if (!currentDetailTaskId) return;
   const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith('image/'));
   if (!files.length) return;

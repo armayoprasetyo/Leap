@@ -826,7 +826,7 @@ function setupRealtime() {
       const updatedTask = payload.new;
       if (positionUpdateIds.has(updatedTask.id)) return;
       const idx = allTasks.findIndex(t => t.id === updatedTask.id);
-      if (idx !== -1) allTasks[idx] = updatedTask;
+      if (idx !== -1) Object.assign(allTasks[idx], updatedTask);
       updateSidebarCounts();
       const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
       if (!existingRow) return;
@@ -1275,7 +1275,7 @@ async function updateTaskProperty(property, value) {
 
   // Optimistic: update allTasks and card DOM immediately, before the DB round-trip
   const taskIdx = allTasks.findIndex(t => t.id === taskId);
-  if (taskIdx !== -1) allTasks[taskIdx] = { ...allTasks[taskIdx], [property]: value };
+  if (taskIdx !== -1) Object.assign(allTasks[taskIdx], { [property]: value });
 
   const nameEl = document.querySelector(`.task-card-name[data-id="${taskId}"]`);
   if (nameEl) {

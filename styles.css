@@ -573,6 +573,11 @@ html.dark .date-tab-arrow-btn:hover { background: #1f2937; color: #9ca3af; }
 .task-check-circle svg { opacity: 0; color: #fff; transition: opacity 0.15s; }
 .task-check-circle:hover { border-color: #22c55e; background: #22c55e; }
 .task-check-circle:hover svg { opacity: 1; }
+.task-check-circle.checked { border-color: #22c55e; background: #22c55e; }
+.task-check-circle.checked svg { opacity: 1; }
+/* Completed task card */
+.task-card.task-card-completed { opacity: 0.65; }
+.task-card.task-card-completed .task-card-name { text-decoration: line-through; color: #9ca3af; }
 
 /* Card name — flex:1 so meta can sit on the right */
 .task-card-name { flex: 1; min-width: 0; font-size: 0.9375rem; font-weight: 500; color: #111827; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -873,6 +878,8 @@ html.dark .card-meta-plain { color: #9ca3af; background: transparent; }
 html.dark .task-card-status-badge .status-select { color: #9ca3af !important; background: transparent !important; }
 html.dark .task-check-circle { border-color: #4b5563; }
 html.dark .task-check-circle:hover { border-color: #22c55e; background: #22c55e; }
+html.dark .task-check-circle.checked { border-color: #22c55e; background: #22c55e; }
+html.dark .task-card.task-card-completed .task-card-name { color: #6b7280; }
 html.dark .task-card-link { background: transparent; color: #60a5fa; }
 html.dark .task-card-link:hover { color: #93c5fd; text-decoration: underline; }
 html.dark .task-card-drag .drag-handle { color: #4b5563; }

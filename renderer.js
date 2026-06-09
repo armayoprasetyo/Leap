@@ -389,7 +389,7 @@ async function fetchTasks() {
 
   let tasks = [];
 
-  const { data, error } = await supabase.from('tasks').select('*').is('deleted_at', null).is('completed_at', null).order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('tasks').select('*').is('deleted_at', null).order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
   if (error) {
     console.error('Error fetching tasks:', error);
     // Silent fail to mock data if table not available
@@ -408,8 +408,9 @@ async function fetchTasks() {
 function createTaskRow(task) {
   const priority = task.priority || 'Medium';
   const linkDomain = task.working_link ? (() => { try { return new URL(task.working_link).hostname; } catch(e) { return ''; } })() : '';
+  const isCompleted = !!task.completed_at;
   const card = document.createElement('div');
-  card.className = 'task-card notion-row';
+  card.className = `task-card notion-row${isCompleted ? ' task-card-completed' : ''}`;
   card.setAttribute('data-id', task.id);
   card.setAttribute('draggable', 'true');
 
@@ -418,7 +419,7 @@ function createTaskRow(task) {
   card.innerHTML = `
     ${carrySelectionMode ? `<div class="carry-check-col"><input type="checkbox" class="carry-checkbox" data-id="${task.id}"${selectedCarryIds.has(task.id) ? ' checked' : ''}></div>` : ''}
     <div class="task-card-check">
-      <button class="task-check-circle" data-id="${task.id}" title="Mark as complete">
+      <button class="task-check-circle${isCompleted ? ' checked' : ''}" data-id="${task.id}" title="${isCompleted ? 'Mark as incomplete' : 'Mark as complete'}">
         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </button>
     </div>
@@ -830,10 +831,11 @@ function setupRealtime() {
       updateSidebarCounts();
       const existingRow = document.querySelector(`.notion-row[data-id="${updatedTask.id}"]`);
       if (!existingRow) return;
-      if (updatedTask.completed_at || updatedTask.deleted_at) {
+      if (updatedTask.deleted_at) {
         removeRowFromTable(updatedTask.id);
         return;
       }
+      applyCompletedStyle(updatedTask.id, !!updatedTask.completed_at);
       if (currentDetailTaskId === updatedTask.id) return;
       updateRowInPlace(existingRow, updatedTask);
     })
@@ -1051,11 +1053,33 @@ async function handleStatusChange(e) {
 }
 
 
+function applyCompletedStyle(id, completed) {
+  const card = document.querySelector(`.notion-row[data-id="${id}"]`);
+  if (!card) return;
+  card.classList.toggle('task-card-completed', completed);
+  const checkBtn = card.querySelector('.task-check-circle');
+  if (checkBtn) {
+    checkBtn.classList.toggle('checked', completed);
+    checkBtn.title = completed ? 'Mark as incomplete' : 'Mark as complete';
+  }
+}
+
 async function handleMarkCompleted(e) {
   const id = e.target.closest('[data-id]').getAttribute('data-id');
-  const { error } = await supabase.from('tasks').update({ completed_at: new Date().toISOString() }).eq('id', id);
-  if (error) { console.error('Error marking task completed:', error); return; }
-  removeRowFromTable(id);
+  const task = allTasks.find(t => t.id === id);
+  const newValue = task?.completed_at ? null : new Date().toISOString();
+
+  // Optimistic visual update
+  Object.assign(task, { completed_at: newValue });
+  applyCompletedStyle(id, !!newValue);
+
+  const { error } = await supabase.from('tasks').update({ completed_at: newValue }).eq('id', id);
+  if (error) {
+    console.error('Error toggling task completion:', error);
+    // Revert
+    Object.assign(task, { completed_at: newValue ? null : new Date().toISOString() });
+    applyCompletedStyle(id, !!task.completed_at);
+  }
 }
 
 async function handleDeleteTask(e) {
@@ -1562,7 +1586,7 @@ async function fetchStatistics() {
 }
 
 // ── History ──────────────────────────────────────────
-let activeHistoryTab = 'completed';
+let activeHistoryTab = 'deleted';
 
 async function fetchHistory(tab = activeHistoryTab) {
   activeHistoryTab = tab;

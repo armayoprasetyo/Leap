@@ -1223,6 +1223,8 @@ async function openDetailModal(task) {
 
   const card = document.querySelector(`.notion-row[data-id="${task.id}"]`);
   if (card) card.classList.add('task-card-selected');
+
+  loadAttachments(task.id);
 }
 
 function closeDetailModal() {
@@ -1230,9 +1232,137 @@ function closeDetailModal() {
   detailModal.classList.remove('detail-panel-open');
   detailModal.style.width = '';
   currentDetailTaskId = null;
+  document.getElementById('attachmentsList').innerHTML = '';
 }
 
 closeDetailBtn.addEventListener('click', closeDetailModal);
+
+// ── Attachments ──────────────────────────────────────────────
+
+const ATTACHMENT_MAX_BYTES = 4 * 1024 * 1024;
+const ATTACHMENT_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'text/html'];
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+async function loadAttachments(taskId) {
+  const list = document.getElementById('attachmentsList');
+  list.innerHTML = '<span class="attachments-loading">Loading…</span>';
+  const { data, error } = await supabase
+    .from('task_attachments')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true });
+  if (error) { list.innerHTML = ''; return; }
+  renderAttachments(data || []);
+}
+
+function renderAttachments(attachments) {
+  const list = document.getElementById('attachmentsList');
+  if (attachments.length === 0) {
+    list.innerHTML = '<span class="attachments-empty">No attachments yet</span>';
+    return;
+  }
+  list.innerHTML = attachments.map(att => {
+    const isImage = att.file_type.startsWith('image/');
+    const publicUrl = supabase.storage.from('task-attachments').getPublicUrl(att.storage_path).data.publicUrl;
+    const thumb = isImage
+      ? `<img class="attachment-thumb" src="${publicUrl}" alt="${att.file_name}" loading="lazy">`
+      : `<div class="attachment-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>`;
+    return `
+      <div class="attachment-item" data-att-id="${att.id}">
+        ${thumb}
+        <div class="attachment-info">
+          <a class="attachment-name" href="${publicUrl}" target="_blank" title="${att.file_name}">${att.file_name}</a>
+          <span class="attachment-size">${formatFileSize(att.file_size)}</span>
+        </div>
+        <button class="btn-attachment-delete" data-att-id="${att.id}" data-att-path="${att.storage_path}" title="Remove">
+          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>`;
+  }).join('');
+}
+
+async function uploadAttachment(file) {
+  if (!currentDetailTaskId) return;
+  if (file.size > ATTACHMENT_MAX_BYTES) {
+    showWebToast(`"${file.name}" exceeds the 4 MB limit`, 'error');
+    return;
+  }
+  if (!ATTACHMENT_ALLOWED_TYPES.includes(file.type)) {
+    showWebToast('Only images (PNG/JPG/GIF/WebP) and HTML files are allowed', 'error');
+    return;
+  }
+  const taskId = currentDetailTaskId;
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `${taskId}/${Date.now()}_${safeName}`;
+
+  const list = document.getElementById('attachmentsList');
+  const uploadingEl = document.createElement('div');
+  uploadingEl.className = 'attachment-uploading';
+  uploadingEl.textContent = `Uploading ${file.name}…`;
+  list.appendChild(uploadingEl);
+
+  const { error: uploadError } = await supabase.storage
+    .from('task-attachments')
+    .upload(path, file, { contentType: file.type });
+
+  uploadingEl.remove();
+
+  if (uploadError) {
+    showWebToast(`Upload failed: ${uploadError.message}`, 'error');
+    return;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error: dbError } = await supabase.from('task_attachments').insert({
+    task_id: taskId,
+    file_name: file.name,
+    file_type: file.type,
+    storage_path: path,
+    file_size: file.size,
+    uploaded_by: user?.id || null
+  });
+
+  if (dbError) {
+    showWebToast(`Failed to save attachment record: ${dbError.message}`, 'error');
+    return;
+  }
+
+  await loadAttachments(taskId);
+}
+
+async function deleteAttachment(id, storagePath) {
+  const { error: storageError } = await supabase.storage
+    .from('task-attachments')
+    .remove([storagePath]);
+  if (storageError) { showWebToast(`Could not delete file: ${storageError.message}`, 'error'); return; }
+
+  const { error: dbError } = await supabase.from('task_attachments').delete().eq('id', id);
+  if (dbError) { showWebToast(`Could not delete record: ${dbError.message}`, 'error'); return; }
+
+  const item = document.querySelector(`.attachment-item[data-att-id="${id}"]`);
+  item?.remove();
+  const list = document.getElementById('attachmentsList');
+  if (!list.querySelector('.attachment-item')) {
+    list.innerHTML = '<span class="attachments-empty">No attachments yet</span>';
+  }
+}
+
+document.getElementById('attachmentInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  for (const file of files) await uploadAttachment(file);
+  e.target.value = '';
+});
+
+document.getElementById('attachmentsList').addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-attachment-delete');
+  if (!btn) return;
+  deleteAttachment(btn.dataset.attId, btn.dataset.attPath);
+});
 
 // Auto-save logic helper
 async function updateTaskProperty(property, value) {

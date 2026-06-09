@@ -1263,7 +1263,7 @@ async function loadAttachments(taskId) {
 function renderAttachments(attachments) {
   const list = document.getElementById('attachmentsList');
   if (attachments.length === 0) {
-    list.innerHTML = '<span class="attachments-empty">Drag files here or press <kbd>Ctrl+V</kbd> to paste a screenshot</span>';
+    list.innerHTML = '<div class="attachments-dropzone">Drop files here or paste with Ctrl+V</div>';
     return;
   }
   list.innerHTML = attachments.map(att => {

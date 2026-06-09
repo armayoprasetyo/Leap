@@ -1263,7 +1263,7 @@ async function loadAttachments(taskId) {
 function renderAttachments(attachments) {
   const list = document.getElementById('attachmentsList');
   if (attachments.length === 0) {
-    list.innerHTML = '<span class="attachments-empty">No attachments yet</span>';
+    list.innerHTML = '<span class="attachments-empty">Drag files here or press <kbd>Ctrl+V</kbd> to paste a screenshot</span>';
     return;
   }
   list.innerHTML = attachments.map(att => {
@@ -1364,11 +1364,15 @@ document.getElementById('attachmentsList').addEventListener('click', (e) => {
   deleteAttachment(btn.dataset.attId, btn.dataset.attPath);
 });
 
-// Ctrl+V paste screenshot into detail panel
-detailModal.addEventListener('paste', async (e) => {
+// Ctrl+V paste screenshot — works globally whenever a task is open
+document.addEventListener('paste', async (e) => {
   if (!currentDetailTaskId) return;
   const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith('image/'));
   if (!files.length) return;
+  // Don't intercept paste inside text inputs / contenteditable
+  const tag = document.activeElement?.tagName;
+  const isEditable = document.activeElement?.isContentEditable;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || isEditable) return;
   e.preventDefault();
   for (const file of files) await uploadAttachment(file);
 });

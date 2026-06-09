@@ -532,9 +532,24 @@ async function saveTaskOrder() {
   setTimeout(() => { positionUpdateIds.clear(); isReordering = false; }, 3000);
 }
 
+function showDragFilterHint() {
+  if (document.getElementById('dragFilterHint')) return;
+  const hint = document.createElement('div');
+  hint.id = 'dragFilterHint';
+  hint.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#374151;color:#fff;padding:6px 14px;border-radius:8px;font-size:0.78rem;z-index:200;pointer-events:none;white-space:nowrap;';
+  hint.textContent = 'Switch to "All" to reorder tasks';
+  const taskMain = document.querySelector('.task-main');
+  (taskMain || document.body).appendChild(hint);
+  setTimeout(() => {
+    hint.style.transition = 'opacity 0.3s';
+    hint.style.opacity = '0';
+    setTimeout(() => hint.remove(), 300);
+  }, 1800);
+}
+
 function setupRowDrag(card) {
   card.addEventListener('dragstart', (e) => {
-    if (currentFilter !== 'all') { e.preventDefault(); return; }
+    if (currentFilter !== 'all') { e.preventDefault(); showDragFilterHint(); return; }
     dragSrcRow = card;
     isDragging = true;
     e.dataTransfer.effectAllowed = 'move';
@@ -1261,6 +1276,10 @@ async function updateTaskProperty(property, value) {
     return;
   }
 
+  // Keep allTasks in sync so sidebar counts and re-renders stay current
+  const taskIdx = allTasks.findIndex(t => t.id === currentDetailTaskId);
+  if (taskIdx !== -1) allTasks[taskIdx] = { ...allTasks[taskIdx], [property]: value };
+
   // Update the task card in the background without a full re-render
   const nameEl = document.querySelector(`.task-card-name[data-id="${currentDetailTaskId}"]`);
   if (nameEl) {
@@ -1270,9 +1289,14 @@ async function updateTaskProperty(property, value) {
     if (property === 'name') nameEl.textContent = value;
     if (property === 'assignee') {
       const chip = card.querySelector('.chip-assignee');
-      if (chip) chip.textContent = value || '—';
-      const task = allTasks.find(t => t.id === currentDetailTaskId);
-      if (task) task.assignee = value;
+      if (chip) {
+        const initial = (value || '?').charAt(0).toUpperCase();
+        const bgMap = { A: '#1c64f2', S: '#7c3aed', R: '#059669', C: '#d97706' };
+        const member = teamMembers.find(m => m.full_name === value);
+        chip.style.background = bgMap[initial] || '#6b7280';
+        chip.title = value || '';
+        chip.innerHTML = `${initial}${member?.avatar_url ? `<img src="${member.avatar_url}" alt="${value}" onerror="this.style.display='none'">` : ''}`;
+      }
       updateSidebarCounts();
     }
     if (property === 'priority') {
@@ -1284,12 +1308,6 @@ async function updateTaskProperty(property, value) {
       logActivity(`updated "${nameEl.textContent}" priority → ${value}`, 'update');
     }
     if (property === 'status') {
-      const badge = card.querySelector('.status-badge');
-      if (badge) {
-        badge.className = `status-badge ${getStatusClass(value)} task-card-status-badge`;
-        const select = badge.querySelector('select');
-        if (select) select.value = value;
-      }
       logActivity(`updated "${nameEl.textContent}" status → ${value}`, 'update');
     }
   }
@@ -1317,6 +1335,7 @@ detailDescription.addEventListener('blur', () => updateTaskProperty('description
 // Initialize Mentions
 setupMentions(detailDescription);
 setupMentions(noteContent);
+setupMentions(notesPanelContent);
 
 // Profile Page Logic
 
@@ -1408,7 +1427,7 @@ async function fetchStatistics() {
   const [activeRes, completedRes, deletedRes] = await Promise.all([
     supabase.from('tasks').select('*', { count: 'exact', head: true }).is('deleted_at', null).is('completed_at', null),
     supabase.from('tasks').select('*', { count: 'exact', head: true }).not('completed_at', 'is', null),
-    supabase.from('tasks').select('*', { count: 'exact', head: true }).not('deleted_at', 'is', null),
+    supabase.from('tasks').select('*', { count: 'exact', head: true }).not('deleted_at', 'is', null).is('completed_at', null),
   ]);
 
   const activeCount = activeRes.count ?? 0;
@@ -1706,12 +1725,13 @@ function renderNotes(notes) {
     `;
   }).join('');
 
-  // Attach click listeners to cards
+  // Attach click listeners to cards — open in side panel
   document.querySelectorAll('.note-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.getAttribute('data-id');
       const note = notes.find(n => n.id === id);
-      openNoteEditor(note);
+      openNotesSidePanel();
+      openNoteInPanel(note);
     });
   });
 }
@@ -1730,7 +1750,7 @@ function openNoteEditor(note = null) {
   noteEditorPage.classList.remove('hidden');
   
   // Hide Nav while editing for "Full View"
-  document.getElementById('floatingNav').classList.add('hidden');
+  floatingNav.classList.add('nav-hidden');
 }
 
 async function saveNote() {
@@ -1772,9 +1792,8 @@ if (addNoteBtn) addNoteBtn.addEventListener('click', () => openNoteEditor());
 
 if (closeEditorBtn) closeEditorBtn.addEventListener('click', () => {
   noteEditorPage.classList.add('hidden');
-  document.getElementById('notesPage').classList.remove('hidden');
-  document.getElementById('floatingNav').classList.remove('hidden');
-  // Update the grid
+  document.getElementById('tasklistPage').classList.remove('hidden');
+  floatingNav.classList.remove('nav-hidden');
   fetchNotes();
 });
 
@@ -2314,6 +2333,8 @@ function insertMention(user) {
   // Trigger update/save
   if (currentMentionElement === noteContent) {
     triggerAutoSave();
+  } else if (currentMentionElement === notesPanelContent) {
+    triggerPanelAutoSave();
   } else if (currentMentionElement === detailDescription) {
     updateTaskProperty('description', detailDescription.innerHTML);
   }

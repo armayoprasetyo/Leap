@@ -432,27 +432,15 @@ function createTaskRow(task) {
       <span class="drag-handle">⋮⋮</span>
     </div>
     <div class="task-card-actions">
-      <div class="actions-wrapper">
-        <button class="btn-actions" data-id="${task.id}" title="Actions">
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-        </button>
-        <div class="actions-dropdown hidden" id="dropdown-${task.id}">
-          <ul class="dropdown-list">
-            <li>
-              <button class="dropdown-item delete-task" data-id="${task.id}">
-                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                Delete
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <button class="btn-actions" data-id="${task.id}" title="Actions">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
     </div>
   `;
 
   card.addEventListener('click', (e) => {
     if (carrySelectionMode) {
-      if (e.target.closest('.actions-wrapper') || e.target.closest('.carry-checkbox')) return;
+      if (e.target.closest('.btn-actions') || e.target.closest('.carry-checkbox')) return;
       const cb = card.querySelector('.carry-checkbox');
       if (cb) {
         cb.checked = !cb.checked;
@@ -462,7 +450,7 @@ function createTaskRow(task) {
       return;
     }
     if (e.target.closest('.task-card-link') ||
-        e.target.closest('.actions-wrapper') || e.target.closest('.task-check-circle')) return;
+        e.target.closest('.btn-actions') || e.target.closest('.task-check-circle')) return;
     openDetailModal(task);
   });
 
@@ -480,12 +468,7 @@ function createTaskRow(task) {
   });
   card.querySelector('.btn-actions').addEventListener('click', (e) => {
     e.stopPropagation();
-    toggleActionsMenu(task.id);
-  });
-  card.querySelector('.delete-task').addEventListener('click', (e) => {
-    e.stopPropagation();
-    handleDeleteTask(e);
-    closeAllDropdowns();
+    toggleActionsMenu(task.id, e.currentTarget);
   });
 
   setupRowDrag(card);
@@ -938,26 +921,47 @@ async function fetchActivityLog() {
   }
 }
 
-function toggleActionsMenu(id) {
-  const dropdown = document.getElementById(`dropdown-${id}`);
-  const isHidden = dropdown.classList.contains('hidden');
+// Single shared action menu at body level — avoids stacking-context overlap with task cards
+const taskActionMenu = (() => {
+  const el = document.createElement('div');
+  el.id = 'taskActionMenu';
+  el.className = 'actions-dropdown hidden';
+  el.innerHTML = `
+    <ul class="dropdown-list">
+      <li>
+        <button class="dropdown-item delete-task">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Delete
+        </button>
+      </li>
+    </ul>`;
+  document.body.appendChild(el);
+  el.querySelector('.delete-task').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const id = el.dataset.taskId;
+    if (id) handleDeleteTaskById(id);
+    closeAllDropdowns();
+  });
+  return el;
+})();
+
+function toggleActionsMenu(id, btn) {
+  const alreadyOpen = !taskActionMenu.classList.contains('hidden') && taskActionMenu.dataset.taskId === id;
   closeAllDropdowns();
-  if (isHidden) {
-    const btn = document.querySelector(`.btn-actions[data-id="${id}"]`);
-    const rect = btn.getBoundingClientRect();
-    dropdown.style.position = 'fixed';
-    dropdown.style.top = (rect.bottom + 4) + 'px';
-    dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-    dropdown.style.left = 'auto';
-    dropdown.classList.remove('hidden');
-  }
+  if (alreadyOpen) return;
+  const rect = btn.getBoundingClientRect();
+  taskActionMenu.dataset.taskId = id;
+  taskActionMenu.style.top = (rect.bottom + 4) + 'px';
+  taskActionMenu.style.right = (window.innerWidth - rect.right) + 'px';
+  taskActionMenu.style.left = 'auto';
+  taskActionMenu.classList.remove('hidden');
 }
 
 function closeAllDropdowns() {
-  document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.add('hidden'));
+  taskActionMenu.classList.add('hidden');
 }
 
-// Close dropdowns on outside click
+// Close menu on outside click
 document.addEventListener('click', closeAllDropdowns);
 
 function renderLinkCell(taskId, url) {
@@ -1023,9 +1027,8 @@ async function handleMarkCompleted(e) {
   }
 }
 
-async function handleDeleteTask(e) {
+async function handleDeleteTaskById(id) {
   if (!confirm('Are you sure you want to delete this task?')) return;
-  const id = e.target.closest('[data-id]').getAttribute('data-id');
   const { error } = await supabase.from('tasks').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) { console.error('Error deleting task:', error); return; }
   removeRowFromTable(id);

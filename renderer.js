@@ -1016,7 +1016,7 @@ function getAssigneeAvatarHTML(name) {
 function getPriorityLottieUrl(priority) {
   switch (priority) {
     case 'Low':    return 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f33f/lottie.json'; 
-    case 'Medium': return 'https://fonts.gstatic.com/s/e/notoemoji/latest/26a1/lottie.json';  
+    case 'Medium': return 'https://fonts.gstatic.com/s/e/notoemoji/latest/231b/lottie.json';  
     case 'High':   return 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/lottie.json'; 
     case 'Urgent': return 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f6a8/lottie.json'; 
     default:       return 'https://fonts.gstatic.com/s/e/notoemoji/latest/26a1/lottie.json';

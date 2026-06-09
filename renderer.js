@@ -67,6 +67,7 @@ const detailAssignee = document.getElementById('detailAssignee');
 const detailPriority = document.getElementById('detailPriority');
 const detailStatus = document.getElementById('detailStatus');
 const detailCompany = document.getElementById('detailCompany');
+const detailCompanyOther = document.getElementById('detailCompanyOther');
 const detailStakeholder = document.getElementById('detailStakeholder');
 const detailLink = document.getElementById('detailLink');
 const detailCreatedAt = document.getElementById('detailCreatedAt');
@@ -1108,7 +1109,7 @@ taskForm.addEventListener('submit', async (e) => {
     name: document.getElementById('taskName').value,
     assignee: assigneeName,
     stake_holder: document.getElementById('stakeHolder').value,
-    company: document.getElementById('company').value,
+    company: getCompanyValue(document.getElementById('company'), document.getElementById('companyOther')),
     working_link: document.getElementById('workingLink').value,
     description: document.getElementById('taskDescription').value,
     priority: document.getElementById('priority').value,
@@ -1126,6 +1127,8 @@ taskForm.addEventListener('submit', async (e) => {
 
   closeModal();
   taskForm.reset();
+  const companyOther = document.getElementById('companyOther');
+  if (companyOther) companyOther.style.display = 'none';
 });
 
 // Modal Logic
@@ -1141,12 +1144,41 @@ function closeModal() {
 
 openModalBtn.addEventListener('click', openModal);
 closeModalBtn.addEventListener('click', closeModal);
+
+document.getElementById('company')?.addEventListener('change', (e) => {
+  const other = document.getElementById('companyOther');
+  if (!other) return;
+  other.style.display = e.target.value === 'Others' ? '' : 'none';
+  if (e.target.value === 'Others') other.focus();
+});
 taskModal.addEventListener('click', (e) => {
   if (e.target === taskModal) closeModal();
 });
 
 // Detail Modal Logic
 let currentDetailTaskId = null;
+
+const COMPANY_OPTIONS = ['Reo.Dev', 'U2opia'];
+
+function getCompanyValue(selectEl, otherEl) {
+  if (!selectEl) return '';
+  return selectEl.value === 'Others' ? (otherEl ? otherEl.value.trim() : '') : selectEl.value;
+}
+
+function setCompanyField(selectEl, otherEl, value) {
+  if (!selectEl || !otherEl) return;
+  if (COMPANY_OPTIONS.includes(value)) {
+    selectEl.value = value;
+    otherEl.style.display = 'none';
+  } else if (value) {
+    selectEl.value = 'Others';
+    otherEl.value = value;
+    otherEl.style.display = '';
+  } else {
+    selectEl.value = '';
+    otherEl.style.display = 'none';
+  }
+}
 
 function initPanelResize() {
   const handle = document.getElementById('panelResizeHandle');
@@ -1194,7 +1226,7 @@ async function openDetailModal(task) {
   detailAssignee.value = task.assignee || 'Arma';
   detailPriority.value = task.priority || 'Medium';
   detailStatus.value = task.status || 'To Do';
-  detailCompany.value = task.company || '';
+  setCompanyField(detailCompany, detailCompanyOther, task.company || '');
   detailStakeholder.value = task.stake_holder || '';
   detailLink.value = task.working_link || '';
 
@@ -1268,7 +1300,16 @@ detailTaskName.addEventListener('blur', () => updateTaskProperty('name', detailT
 detailAssignee.addEventListener('change', () => updateTaskProperty('assignee', detailAssignee.value));
 detailPriority.addEventListener('change', () => updateTaskProperty('priority', detailPriority.value));
 detailStatus.addEventListener('change', () => updateTaskProperty('status', detailStatus.value));
-detailCompany.addEventListener('blur', () => updateTaskProperty('company', detailCompany.value.trim()));
+detailCompany.addEventListener('change', () => {
+  const isOthers = detailCompany.value === 'Others';
+  detailCompanyOther.style.display = isOthers ? '' : 'none';
+  if (isOthers) { detailCompanyOther.focus(); return; }
+  updateTaskProperty('company', detailCompany.value);
+});
+detailCompanyOther.addEventListener('blur', () => {
+  const val = detailCompanyOther.value.trim();
+  if (val) updateTaskProperty('company', val);
+});
 detailStakeholder.addEventListener('blur', () => updateTaskProperty('stake_holder', detailStakeholder.value.trim()));
 detailLink.addEventListener('blur', () => updateTaskProperty('working_link', detailLink.value.trim()));
 detailDescription.addEventListener('blur', () => updateTaskProperty('description', detailDescription.innerHTML.trim()));

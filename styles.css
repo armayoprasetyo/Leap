@@ -252,6 +252,7 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .btn-attachment-delete:hover { background: #fee2e2; color: #dc2626; }
 .attachment-uploading { font-size: 0.8rem; color: #6b7280; padding: 6px 8px; border-radius: 8px; border: 1px dashed #d1d5db; animation: attach-pulse 1.2s ease-in-out infinite; }
 @keyframes attach-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.detail-attachments.drag-over { background: #eff6ff; border-radius: 10px; outline: 2px dashed #1c64f2; outline-offset: -4px; }
 
 .detail-content-area { padding: 16px 24px; flex: 1; overflow-y: auto; border-top: 1px solid #f3f4f6; margin-top: 8px; }
 .detail-content-area h3 { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; font-weight: 600; }
@@ -749,6 +750,7 @@ html.dark .attachment-icon { background: #312e81; color: #818cf8; }
 html.dark .attachment-name { color: #e5e7eb; }
 html.dark .attachment-name:hover { color: #60a5fa; }
 html.dark .attachment-uploading { border-color: #4b5563; color: #9ca3af; }
+html.dark .detail-attachments.drag-over { background: #1e3a5f; outline-color: #3b82f6; }
 
 /* Notification Panel */
 html.dark .notif-panel { background: #1f2937; border-color: #374151; }

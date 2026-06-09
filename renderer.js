@@ -1364,6 +1364,32 @@ document.getElementById('attachmentsList').addEventListener('click', (e) => {
   deleteAttachment(btn.dataset.attId, btn.dataset.attPath);
 });
 
+// Ctrl+V paste screenshot into detail panel
+detailModal.addEventListener('paste', async (e) => {
+  if (!currentDetailTaskId) return;
+  const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  e.preventDefault();
+  for (const file of files) await uploadAttachment(file);
+});
+
+// Drag & drop onto attachments section
+const attachmentsSection = document.querySelector('.detail-attachments');
+attachmentsSection.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  attachmentsSection.classList.add('drag-over');
+});
+attachmentsSection.addEventListener('dragleave', () => {
+  attachmentsSection.classList.remove('drag-over');
+});
+attachmentsSection.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  attachmentsSection.classList.remove('drag-over');
+  if (!currentDetailTaskId) return;
+  const files = Array.from(e.dataTransfer.files);
+  for (const file of files) await uploadAttachment(file);
+});
+
 // Auto-save logic helper
 async function updateTaskProperty(property, value) {
   if (!currentDetailTaskId) return;

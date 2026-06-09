@@ -202,6 +202,14 @@
               <svg id="fabIconClose" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
+
+          <!-- Image Lightbox — lives inside center panel so it never overlaps detail panel -->
+          <div id="attachmentLightbox" class="attachment-lightbox hidden">
+            <button id="lightboxClose" class="lightbox-close" title="Close">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <img id="lightboxImg" class="lightbox-img" src="" alt="">
+          </div>
         </main>
 
         <!-- Right: Detail Panel (inline, not overlay) -->

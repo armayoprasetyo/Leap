@@ -1272,11 +1272,14 @@ function renderAttachments(attachments) {
     const thumb = isImage
       ? `<img class="attachment-thumb" src="${publicUrl}" alt="${att.file_name}" loading="lazy">`
       : `<div class="attachment-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>`;
+    const nameEl = isImage
+      ? `<button class="attachment-name" data-lightbox-url="${publicUrl}" data-lightbox-name="${att.file_name}" title="View image">${att.file_name}</button>`
+      : `<a class="attachment-name" href="${publicUrl}" download="${att.file_name}" title="Download">${att.file_name} ↓</a>`;
     return `
       <div class="attachment-item" data-att-id="${att.id}">
         ${thumb}
         <div class="attachment-info">
-          <a class="attachment-name" href="${publicUrl}" target="_blank" title="${att.file_name}">${att.file_name}</a>
+          ${nameEl}
           <span class="attachment-size">${formatFileSize(att.file_size)}</span>
         </div>
         <button class="btn-attachment-delete" data-att-id="${att.id}" data-att-path="${att.storage_path}" title="Remove">
@@ -1359,10 +1362,31 @@ document.getElementById('attachmentInput').addEventListener('change', async (e) 
 });
 
 document.getElementById('attachmentsList').addEventListener('click', (e) => {
-  const btn = e.target.closest('.btn-attachment-delete');
-  if (!btn) return;
-  deleteAttachment(btn.dataset.attId, btn.dataset.attPath);
+  const deleteBtn = e.target.closest('.btn-attachment-delete');
+  if (deleteBtn) { deleteAttachment(deleteBtn.dataset.attId, deleteBtn.dataset.attPath); return; }
+
+  const lightboxBtn = e.target.closest('[data-lightbox-url]');
+  if (lightboxBtn) openLightbox(lightboxBtn.dataset.lightboxUrl, lightboxBtn.dataset.lightboxName);
 });
+
+// Image lightbox
+const lightbox = document.getElementById('attachmentLightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+
+function openLightbox(url, name) {
+  lightboxImg.src = url;
+  lightboxImg.alt = name;
+  lightbox.classList.remove('hidden');
+}
+
+function closeLightbox() {
+  lightbox.classList.add('hidden');
+  lightboxImg.src = '';
+}
+
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) closeLightbox(); });
 
 // Ctrl+V paste screenshot — works globally whenever a task is open
 document.addEventListener('paste', async (e) => {

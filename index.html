@@ -283,17 +283,13 @@
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                   Attachments
                 </span>
-                <label class="btn-attach" title="Add file (max 4MB)">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                  Add file
-                  <input type="file" id="attachmentInput" accept="image/png,image/jpeg,image/gif,image/webp,text/html,.html" multiple style="display:none">
-                </label>
               </div>
-              <p class="attachments-hint">
-                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Click <strong>Add file</strong>, drag &amp; drop, or press <kbd>Ctrl+V</kbd> to paste a screenshot directly. Max 4 MB per file. Supports images &amp; HTML.
-              </p>
               <div id="attachmentsList" class="attachments-list"></div>
+              <label class="attachments-dropzone" title="Click to upload, drag & drop, or Ctrl+V to paste">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                Drop files, click to upload, or <kbd>Ctrl+V</kbd>
+                <input type="file" id="attachmentInput" accept="image/png,image/jpeg,image/gif,image/webp,text/html,.html" multiple style="display:none">
+              </label>
             </div>
 
             <div class="detail-content-area">

@@ -235,14 +235,10 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .detail-attachments { padding: 10px 24px 6px; flex-shrink: 0; border-top: 1px solid #f3f4f6; }
 .attachments-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .attachments-label { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
-.btn-attach { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 500; color: #1c64f2; cursor: pointer; padding: 3px 8px; border-radius: 6px; border: 1px solid #dbeafe; background: #eff6ff; transition: background 0.15s; user-select: none; }
-.btn-attach:hover { background: #dbeafe; }
 .attachments-list { display: flex; flex-direction: column; gap: 6px; }
-.attachments-hint { display: flex; align-items: flex-start; gap: 5px; font-size: 0.775rem; color: #9ca3af; margin: 0 0 8px; line-height: 1.5; }
-.attachments-hint svg { flex-shrink: 0; margin-top: 2px; }
-.attachments-hint strong { color: #6b7280; font-weight: 500; }
-.attachments-hint kbd { display: inline-block; font-family: inherit; font-size: 0.72rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 0 4px; color: #6b7280; vertical-align: middle; line-height: 1.6; }
-.attachments-dropzone { font-size: 0.8rem; color: #b0b7c3; text-align: center; padding: 14px 10px; border: 1.5px dashed #e5e7eb; border-radius: 8px; }
+.attachments-dropzone { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 10px; border: 1.5px dashed #d1d5db; border-radius: 8px; font-size: 0.8rem; color: #9ca3af; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+.attachments-dropzone:hover { border-color: #1c64f2; color: #1c64f2; background: #eff6ff; }
+.attachments-dropzone kbd { font-family: inherit; font-size: 0.72rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 0 4px; color: #6b7280; line-height: 1.6; }
 .attachments-loading { font-size: 0.8125rem; color: #9ca3af; }
 .attachment-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb; transition: background 0.1s; }
 .attachment-item:hover { background: #f3f4f6; }
@@ -745,8 +741,9 @@ html.dark .detail-content-area h3 { color: #6b7280; }
 html.dark .detail-description { color: #d1d5db; }
 html.dark [contenteditable=true]:empty:before { color: #4b5563; }
 html.dark .detail-attachments { border-color: #374151; }
-html.dark .btn-attach { background: #1e3a5f; border-color: #1d4ed8; color: #60a5fa; }
-html.dark .btn-attach:hover { background: #1e3a8a; }
+html.dark .attachments-dropzone { border-color: #374151; color: #6b7280; }
+html.dark .attachments-dropzone:hover { border-color: #3b82f6; color: #60a5fa; background: #1e3a5f; }
+html.dark .attachments-dropzone kbd { background: #374151; border-color: #4b5563; color: #9ca3af; }
 html.dark .attachment-item { background: #1f2937; border-color: #374151; }
 html.dark .attachment-item:hover { background: #374151; }
 html.dark .attachment-thumb { border-color: #374151; }
@@ -755,10 +752,6 @@ html.dark .attachment-name { color: #e5e7eb; }
 html.dark .attachment-name:hover { color: #60a5fa; }
 html.dark .attachment-uploading { border-color: #4b5563; color: #9ca3af; }
 html.dark .detail-attachments.drag-over { background: #1e3a5f; outline-color: #3b82f6; }
-html.dark .attachments-hint { color: #6b7280; }
-html.dark .attachments-hint strong { color: #9ca3af; }
-html.dark .attachments-hint kbd { background: #374151; border-color: #4b5563; color: #9ca3af; }
-html.dark .attachments-dropzone { border-color: #374151; color: #6b7280; }
 
 /* Notification Panel */
 html.dark .notif-panel { background: #1f2937; border-color: #374151; }

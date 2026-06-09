@@ -1263,7 +1263,7 @@ async function loadAttachments(taskId) {
 function renderAttachments(attachments) {
   const list = document.getElementById('attachmentsList');
   if (attachments.length === 0) {
-    list.innerHTML = '<div class="attachments-dropzone">Drop files here or paste with Ctrl+V</div>';
+    list.innerHTML = '';
     return;
   }
   list.innerHTML = attachments.map(att => {

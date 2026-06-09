@@ -606,6 +606,29 @@ html.dark .date-tab-arrow-btn:hover { background: #1f2937; color: #9ca3af; }
 @keyframes rowFlashCard { 0% { background-color: #fff; } 30% { background-color: #eff6ff; } 100% { background-color: #fff; } }
 .task-card.row-updated { animation: rowFlashCard 0.7s ease-out; }
 
+/* Selected card — spinning gradient border */
+@property --selected-border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.task-card.task-card-selected {
+  border-color: transparent !important;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(from var(--selected-border-angle), #1c64f2 0%, #7c3aed 35%, #ec4899 65%, #1c64f2 100%) border-box !important;
+  animation: selectedBorderSpin 2.4s linear infinite;
+  box-shadow: 0 0 0 0 transparent !important;
+}
+@keyframes selectedBorderSpin {
+  to { --selected-border-angle: 360deg; }
+}
+html.dark .task-card.task-card-selected {
+  background:
+    linear-gradient(#1f2937, #1f2937) padding-box,
+    conic-gradient(from var(--selected-border-angle), #3b82f6 0%, #8b5cf6 35%, #ec4899 65%, #3b82f6 100%) border-box !important;
+}
+
 /* ============================================================
    DARK MODE — Flowbite dark palette
    gray-900 #111827 · gray-800 #1f2937 · gray-700 #374151

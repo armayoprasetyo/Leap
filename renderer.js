@@ -1236,6 +1236,7 @@ function initPanelResize() {
 
 async function openDetailModal(task) {
   closeNotesSidePanel();
+  document.querySelector('.task-card.task-card-selected')?.classList.remove('task-card-selected');
   currentDetailTaskId = task.id;
   detailTaskName.textContent = task.name;
   detailAssignee.value = task.assignee || 'Arma';
@@ -1253,9 +1254,13 @@ async function openDetailModal(task) {
   const savedWidth = parseInt(localStorage.getItem('detailPanelWidth'));
   if (savedWidth >= 280) detailModal.style.width = savedWidth + 'px';
   detailModal.classList.add('detail-panel-open');
+
+  const card = document.querySelector(`.notion-row[data-id="${task.id}"]`);
+  if (card) card.classList.add('task-card-selected');
 }
 
 function closeDetailModal() {
+  document.querySelector('.task-card.task-card-selected')?.classList.remove('task-card-selected');
   detailModal.classList.remove('detail-panel-open');
   detailModal.style.width = '';
   currentDetailTaskId = null;

@@ -65,7 +65,6 @@ const closeDetailBtn = document.getElementById('closeDetailBtn');
 const detailTaskName = document.getElementById('detailTaskName');
 const detailAssignee = document.getElementById('detailAssignee');
 const detailPriority = document.getElementById('detailPriority');
-const detailStatus = document.getElementById('detailStatus');
 const detailCompany = document.getElementById('detailCompany');
 const detailCompanyOther = document.getElementById('detailCompanyOther');
 const detailStakeholder = document.getElementById('detailStakeholder');
@@ -475,7 +474,7 @@ function createTaskRow(task) {
       }
       return;
     }
-    if (e.target.closest('.status-select') || e.target.closest('.task-card-link') ||
+    if (e.target.closest('.task-card-link') ||
         e.target.closest('.actions-wrapper') || e.target.closest('.task-check-circle')) return;
     openDetailModal(task);
   });
@@ -984,16 +983,6 @@ function closeAllDropdowns() {
 // Close dropdowns on outside click
 document.addEventListener('click', closeAllDropdowns);
 
-function getStatusClass(status) {
-  switch (status) {
-    case 'To Do': return 'status-todo';
-    case 'In Progress': return 'status-progress';
-    case 'Review': return 'status-review';
-    case 'Done': return 'status-done';
-    default: return 'status-todo';
-  }
-}
-
 function renderLinkCell(taskId, url) {
   if (!url) return `<button class="btn-link-add" data-id="${taskId}" title="Add link">+ Add</button>`;
   let favicon = '';
@@ -1025,33 +1014,8 @@ function getPriorityLottieUrl(priority) {
   }
 }
 
-// Resize a card status <select> to fit its selected option text
-function fitSelectWidth(sel) {
-  const text = sel.options[sel.selectedIndex]?.text || '';
-  const tmp = document.createElement('span');
-  tmp.style.cssText = 'position:fixed;top:-9999px;font:500 0.78rem/1 Inter,system-ui,sans-serif;white-space:nowrap;visibility:hidden;pointer-events:none;';
-  tmp.textContent = text;
-  document.body.appendChild(tmp);
-  sel.style.width = (tmp.offsetWidth + 22) + 'px';
-  document.body.removeChild(tmp);
-}
 
 // Event Handlers
-async function handleStatusChange(e) {
-  if (isDragging) return;
-  const id = e.target.getAttribute('data-id');
-  const newStatus = e.target.value;
-  
-  const badge = e.target.parentElement;
-  badge.className = `status-badge ${getStatusClass(newStatus)}`;
-  fitSelectWidth(e.target);
-
-  const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
-  if (error) { console.error('Error updating status:', error); return; }
-  const taskName = document.querySelector(`.task-card-name[data-id="${id}"]`)?.textContent || 'Task';
-  logActivity(`updated "${taskName}" → ${newStatus}`, 'update');
-}
-
 
 function applyCompletedStyle(id, completed) {
   const card = document.querySelector(`.notion-row[data-id="${id}"]`);
@@ -1152,7 +1116,6 @@ taskForm.addEventListener('submit', async (e) => {
     working_link: document.getElementById('workingLink').value,
     description: document.getElementById('taskDescription').value,
     priority: document.getElementById('priority').value,
-    status: document.getElementById('status').value,
     position: 0
   };
 
@@ -1265,7 +1228,6 @@ async function openDetailModal(task) {
   detailTaskName.textContent = task.name;
   detailAssignee.value = task.assignee || 'Arma';
   detailPriority.value = task.priority || 'Medium';
-  detailStatus.value = task.status || 'To Do';
   setCompanyField(detailCompany, detailCompanyOther, task.company || '');
   detailStakeholder.value = task.stake_holder || '';
   detailLink.value = task.working_link || '';
@@ -1338,14 +1300,12 @@ async function updateTaskProperty(property, value) {
   // Post-save activity log (only after confirmed write)
   const taskName = document.querySelector(`.task-card-name[data-id="${taskId}"]`)?.textContent || '';
   if (property === 'priority') logActivity(`updated "${taskName}" priority → ${value}`, 'update');
-  if (property === 'status') logActivity(`updated "${taskName}" status → ${value}`, 'update');
 }
 
 // Auto-save listeners
 detailTaskName.addEventListener('blur', () => updateTaskProperty('name', detailTaskName.textContent.trim()));
 detailAssignee.addEventListener('change', () => updateTaskProperty('assignee', detailAssignee.value));
 detailPriority.addEventListener('change', () => updateTaskProperty('priority', detailPriority.value));
-detailStatus.addEventListener('change', () => updateTaskProperty('status', detailStatus.value));
 detailCompany.addEventListener('change', () => {
   const isOthers = detailCompany.value === 'Others';
   detailCompanyOther.style.display = isOthers ? '' : 'none';
@@ -1447,7 +1407,6 @@ const backFromStats = document.getElementById('backFromStats');
 if (backFromStats) backFromStats.addEventListener('click', () => switchPage('tasklist'));
 
 // ── Statistics ───────────────────────────────────────
-let statusChartInstance = null;
 let completionChartInstance = null;
 
 async function fetchStatistics() {
@@ -1469,15 +1428,6 @@ async function fetchStatistics() {
   if (completedEl) completedEl.textContent = completedCount;
   if (deletedEl) deletedEl.textContent = deletedCount;
 
-  // Fetch active tasks for status donut chart
-  const { data: activeTasks } = await supabase
-    .from('tasks').select('status').is('deleted_at', null).is('completed_at', null);
-
-  const statusCounts = { 'To Do': 0, 'In Progress': 0, 'Review': 0, 'Done': 0 };
-  (activeTasks || []).forEach(t => {
-    if (t.status in statusCounts) statusCounts[t.status]++;
-  });
-
   const isDark = document.documentElement.classList.contains('dark');
   const clr = {
     legendText:  isDark ? '#9ca3af' : '#6b7280',
@@ -1485,36 +1435,6 @@ async function fetchStatistics() {
     tickText:    isDark ? '#6b7280' : '#9ca3af',
     cardBorder:  isDark ? '#1f2937' : '#fff',
   };
-
-  if (statusChartInstance) statusChartInstance.destroy();
-  const donutCtx = document.getElementById('statusDonutChart');
-  if (donutCtx) {
-    statusChartInstance = new Chart(donutCtx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(statusCounts),
-        datasets: [{
-          data: Object.values(statusCounts),
-          backgroundColor: isDark
-            ? ['#374151', '#1d4ed8', '#b45309', '#15803d']
-            : ['#e5e7eb', '#3b82f6', '#f59e0b', '#22c55e'],
-          borderWidth: 2,
-          borderColor: clr.cardBorder,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '68%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { boxWidth: 12, padding: 16, font: { family: 'Inter', size: 12 }, color: clr.legendText }
-          }
-        }
-      }
-    });
-  }
 
   // Fetch completions for last 7 days
   const dayLabels = [];
@@ -1654,8 +1574,7 @@ function createHistoryItem(task, isCompleted = false) {
         <span class="history-time" title="${fullDate}">${timeAgo}</span>
       </div>
       <div class="history-card-meta">
-        <span class="status-badge ${getStatusClass(task.status)}" style="position:relative;width:auto;padding:0 10px;">${task.status || 'To Do'}</span>
-        <span class="priority-badge priority-${(task.priority || 'medium').toLowerCase()}">${task.priority || 'Medium'}</span>
+<span class="priority-badge priority-${(task.priority || 'medium').toLowerCase()}">${task.priority || 'Medium'}</span>
         ${task.assignee ? `<span class="history-assignee">${task.assignee}</span>` : ''}
         ${task.company ? `<span class="history-company">· ${task.company}</span>` : ''}
       </div>

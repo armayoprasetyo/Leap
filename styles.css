@@ -109,7 +109,6 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .col-company     { width: 140px; }
 .col-stakeholder { width: 130px; }
 .col-priority    { width: 120px; }
-.col-status      { width: 130px; }
 .col-link        { width: 90px; }
 .col-actions     { width: 44px; }
 
@@ -163,20 +162,6 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .inline-save-btn:hover   { background: #d1fae5; }
 .inline-cancel-btn:hover { background: #fee2e2; }
 
-/* ── Status Badges ── */
-.status-badge { display: inline-flex; align-items: center; justify-content: center; width: 108px; height: 24px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; position: relative; cursor: pointer; transition: opacity 0.2s; }
-.status-badge:hover { opacity: 0.85; }
-.status-todo     { background: #f3f4f6; color: #4b5563; }
-.status-progress { background: #dbeafe; color: #1e40af; }
-.status-review   { background: #fef9c3; color: #854d0e; }
-.status-done     { background: #dcfce7; color: #166534; }
-
-.status-select { position: absolute; inset: 0; background: transparent; border: none; font-size: 0.72rem; font-weight: 600; font-family: inherit; cursor: pointer; outline: none; appearance: none; text-align: center; width: 100%; height: 100%; }
-.status-todo .status-select     { color: #4b5563; }
-.status-progress .status-select { color: #1e40af; }
-.status-review .status-select   { color: #854d0e; }
-.status-done .status-select     { color: #166534; }
-.status-select option { color: #111827; background: #fff; font-weight: 500; }
 
 /* ── Priority Badges ── */
 .priority-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; letter-spacing: 0.2px; }
@@ -589,9 +574,6 @@ html.dark .date-tab-arrow-btn:hover { background: #1f2937; color: #9ca3af; }
 .card-assignee-avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; position: relative; font-size: 0.65rem; font-weight: 700; color: #fff; line-height: 1; }
 .card-assignee-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .priority-plain { background: transparent !important; padding: 0 !important; border-radius: 0 !important; animation: none !important; font-size: 0.78rem !important; }
-/* Status: hug content, no colored pill */
-.task-card-status-badge { display: inline-flex !important; background: transparent !important; width: auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; border-radius: 0 !important; }
-.task-card-status-badge .status-select { position: static !important; width: auto !important; height: auto !important; text-align: left !important; font-size: 0.78rem !important; color: #374151 !important; }
 /* Link: favicon + plain text, no background pill */
 .task-card-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: #1c64f2; text-decoration: none; padding: 0; background: transparent; transition: color 0.1s; }
 .task-card-link:hover { color: #1e40af; text-decoration: underline; }
@@ -684,16 +666,6 @@ html.dark .btn-link-add:hover { border-color: #3b82f6; color: #60a5fa; }
 html.dark .notion-row.row-updated td { animation: rowFlashDark 0.7s ease-out; }
 html.dark .notion-row.row-dragging td { background: #1e3a5f !important; }
 
-/* Status badges */
-html.dark .status-todo     { background: #374151; color: #9ca3af; }
-html.dark .status-progress { background: #1e3a5f; color: #93c5fd; }
-html.dark .status-review   { background: #422006; color: #fcd34d; }
-html.dark .status-done     { background: #14532d; color: #86efac; }
-html.dark .status-todo .status-select     { color: #9ca3af; }
-html.dark .status-progress .status-select { color: #93c5fd; }
-html.dark .status-review .status-select   { color: #fcd34d; }
-html.dark .status-done .status-select     { color: #86efac; }
-html.dark .status-select option { background: #1f2937; color: #f9fafb; }
 
 /* Priority badges */
 html.dark .priority-low    { background: #14532d; color: #86efac; }
@@ -875,7 +847,6 @@ html.dark .task-card { background: #1f2937; border-color: #374151; }
 html.dark .task-card:hover { border-color: #4b5563; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 html.dark .task-card-name { color: #f9fafb; }
 html.dark .card-meta-plain { color: #9ca3af; background: transparent; }
-html.dark .task-card-status-badge .status-select { color: #9ca3af !important; background: transparent !important; }
 html.dark .task-check-circle { border-color: #4b5563; }
 html.dark .task-check-circle:hover { border-color: #22c55e; background: #22c55e; }
 html.dark .task-check-circle.checked { border-color: #22c55e; background: #22c55e; }

@@ -1271,51 +1271,50 @@ closeDetailBtn.addEventListener('click', closeDetailModal);
 // Auto-save logic helper
 async function updateTaskProperty(property, value) {
   if (!currentDetailTaskId) return;
-  
-  let updateData = { [property]: value };
+  const taskId = currentDetailTaskId; // snapshot — currentDetailTaskId can change mid-await
 
-  // Update Supabase
-  const { error } = await supabase.from('tasks').update(updateData).eq('id', currentDetailTaskId);
+  // Optimistic: update allTasks and card DOM immediately, before the DB round-trip
+  const taskIdx = allTasks.findIndex(t => t.id === taskId);
+  if (taskIdx !== -1) allTasks[taskIdx] = { ...allTasks[taskIdx], [property]: value };
+
+  const nameEl = document.querySelector(`.task-card-name[data-id="${taskId}"]`);
+  if (nameEl) {
+    const card = nameEl.closest('.task-card');
+    if (card) {
+      if (property === 'name') nameEl.textContent = value;
+      if (property === 'assignee') {
+        const chip = card.querySelector('.chip-assignee');
+        if (chip) {
+          const initial = (value || '?').charAt(0).toUpperCase();
+          const bgMap = { A: '#1c64f2', S: '#7c3aed', R: '#059669', C: '#d97706' };
+          const member = teamMembers.find(m => m.full_name === value);
+          chip.style.background = bgMap[initial] || '#6b7280';
+          chip.title = value || '';
+          chip.innerHTML = `${initial}${member?.avatar_url ? `<img src="${member.avatar_url}" alt="${value}" onerror="this.style.display='none'">` : ''}`;
+        }
+        updateSidebarCounts();
+      }
+      if (property === 'priority') {
+        const badge = card.querySelector('.priority-badge');
+        if (badge) {
+          badge.className = `priority-badge priority-${value.toLowerCase()}`;
+          badge.innerHTML = `<lottie-player src="${getPriorityLottieUrl(value)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${value}`;
+        }
+      }
+    }
+  }
+
+  // Persist to Supabase
+  const { error } = await supabase.from('tasks').update({ [property]: value }).eq('id', taskId);
   if (error) {
     console.error(`Error updating ${property}:`, error);
     return;
   }
 
-  // Keep allTasks in sync so sidebar counts and re-renders stay current
-  const taskIdx = allTasks.findIndex(t => t.id === currentDetailTaskId);
-  if (taskIdx !== -1) allTasks[taskIdx] = { ...allTasks[taskIdx], [property]: value };
-
-  // Update the task card in the background without a full re-render
-  const nameEl = document.querySelector(`.task-card-name[data-id="${currentDetailTaskId}"]`);
-  if (nameEl) {
-    const card = nameEl.closest('.task-card');
-    if (!card) return;
-
-    if (property === 'name') nameEl.textContent = value;
-    if (property === 'assignee') {
-      const chip = card.querySelector('.chip-assignee');
-      if (chip) {
-        const initial = (value || '?').charAt(0).toUpperCase();
-        const bgMap = { A: '#1c64f2', S: '#7c3aed', R: '#059669', C: '#d97706' };
-        const member = teamMembers.find(m => m.full_name === value);
-        chip.style.background = bgMap[initial] || '#6b7280';
-        chip.title = value || '';
-        chip.innerHTML = `${initial}${member?.avatar_url ? `<img src="${member.avatar_url}" alt="${value}" onerror="this.style.display='none'">` : ''}`;
-      }
-      updateSidebarCounts();
-    }
-    if (property === 'priority') {
-      const badge = card.querySelector('.priority-badge');
-      if (badge) {
-        badge.className = `priority-badge priority-${value.toLowerCase()}`;
-        badge.innerHTML = `<lottie-player src="${getPriorityLottieUrl(value)}" background="transparent" speed="1" style="width:18px;height:18px;flex-shrink:0;" loop autoplay></lottie-player>${value}`;
-      }
-      logActivity(`updated "${nameEl.textContent}" priority → ${value}`, 'update');
-    }
-    if (property === 'status') {
-      logActivity(`updated "${nameEl.textContent}" status → ${value}`, 'update');
-    }
-  }
+  // Post-save activity log (only after confirmed write)
+  const taskName = document.querySelector(`.task-card-name[data-id="${taskId}"]`)?.textContent || '';
+  if (property === 'priority') logActivity(`updated "${taskName}" priority → ${value}`, 'update');
+  if (property === 'status') logActivity(`updated "${taskName}" status → ${value}`, 'update');
 }
 
 // Auto-save listeners

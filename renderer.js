@@ -621,11 +621,30 @@ async function carryTasksToToday(idsToCarry = null) {
   const allBtns = ['carryToTodayBtn', 'carryConfirmBtn', 'carrySelectBtn'].map(id => document.getElementById(id)).filter(Boolean);
   allBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
 
-  await Promise.all(tasksToCarry.map(t =>
-    supabase.from('tasks').update({ task_date: todayISO }).eq('id', t.id)
-  ));
+  const results = await Promise.all(
+    tasksToCarry.map(t =>
+      supabase.from('tasks').update({ task_date: todayISO }).eq('id', t.id).select('id, task_date')
+    )
+  );
 
-  tasksToCarry.forEach(t => { t.task_date = todayISO; });
+  const firstError = results.find(r => r.error);
+  if (firstError) {
+    console.error('Carry failed:', firstError.error);
+    const msg = firstError.error.message || JSON.stringify(firstError.error);
+    alert(`Carry failed: ${msg}\n\nPastikan kolom "task_date" sudah ada di tabel tasks di Supabase.\nJalankan SQL berikut di Supabase SQL Editor:\n\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS task_date date;`);
+    allBtns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
+    return;
+  }
+
+  // Sync local state with what the DB actually returned
+  results.forEach(r => {
+    if (r.data && r.data[0]) {
+      const saved = r.data[0];
+      const local = allTasks.find(t => t.id === saved.id);
+      if (local) local.task_date = saved.task_date;
+    }
+  });
+
   carrySelectionMode = false;
   selectedCarryIds.clear();
   selectedDateStr = new Date().toDateString();

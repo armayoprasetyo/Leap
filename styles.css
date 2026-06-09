@@ -615,7 +615,7 @@ html.dark .date-tab-arrow-btn:hover { background: #1f2937; color: #9ca3af; }
 .task-card.task-card-selected {
   border-color: transparent !important;
   background:
-    linear-gradient(#eff6ff, #eff6ff) padding-box,
+    linear-gradient(#ffffff, #ffffff) padding-box,
     conic-gradient(from var(--selected-border-angle), #1c64f2 0%, #7c3aed 35%, #ec4899 65%, #1c64f2 100%) border-box !important;
   animation: selectedBorderSpin 2.4s linear infinite;
   box-shadow: 0 0 0 0 transparent !important;
@@ -625,7 +625,7 @@ html.dark .date-tab-arrow-btn:hover { background: #1f2937; color: #9ca3af; }
 }
 html.dark .task-card.task-card-selected {
   background:
-    linear-gradient(#1e3a5f, #1e3a5f) padding-box,
+    linear-gradient(#1e3a8a, #1e3a8a) padding-box,
     conic-gradient(from var(--selected-border-angle), #3b82f6 0%, #8b5cf6 35%, #ec4899 65%, #3b82f6 100%) border-box !important;
 }
 

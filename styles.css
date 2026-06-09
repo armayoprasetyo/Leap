@@ -237,6 +237,11 @@ body { background: #f9fafb; color: #111827; height: 100vh; display: flex; flex-d
 .attachments-label { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
 .attachments-list { display: flex; flex-direction: column; gap: 6px; }
 .attachments-dropzone { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 10px; border: 1.5px dashed #d1d5db; border-radius: 8px; font-size: 0.8rem; color: #9ca3af; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+.modal-dropzone { margin-top: 0; }
+.modal-attachment-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.modal-attachment-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 7px; background: #f3f4f6; font-size: 0.8rem; }
+.modal-attachment-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #374151; }
+.modal-attachment-size { flex-shrink: 0; color: #9ca3af; font-size: 0.72rem; }
 .attachments-dropzone:hover { border-color: #1c64f2; color: #1c64f2; background: #eff6ff; }
 .attachments-dropzone kbd { font-family: inherit; font-size: 0.72rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 0 4px; color: #6b7280; line-height: 1.6; }
 .attachments-loading { font-size: 0.8125rem; color: #9ca3af; }
@@ -748,6 +753,8 @@ html.dark .detail-content-area h3 { color: #6b7280; }
 html.dark .detail-description { color: #d1d5db; }
 html.dark [contenteditable=true]:empty:before { color: #4b5563; }
 html.dark .detail-attachments { border-color: #374151; }
+html.dark .modal-attachment-item { background: #374151; }
+html.dark .modal-attachment-name { color: #e5e7eb; }
 html.dark .attachments-dropzone { border-color: #374151; color: #6b7280; }
 html.dark .attachments-dropzone:hover { border-color: #3b82f6; color: #60a5fa; background: #1e3a5f; }
 html.dark .attachments-dropzone kbd { background: #374151; border-color: #4b5563; color: #9ca3af; }

@@ -1083,11 +1083,57 @@ async function handleLinkEdit(e) {
   cancelBtn.addEventListener('click', () => restoreCell(existingLink));
 }
 
+// Pending attachments for the create modal
+let pendingModalFiles = [];
+
+function renderModalAttachmentList() {
+  const list = document.getElementById('modalAttachmentList');
+  if (pendingModalFiles.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = pendingModalFiles.map((f, i) => `
+    <div class="modal-attachment-item">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+      <span class="modal-attachment-name">${f.name}</span>
+      <span class="modal-attachment-size">${formatFileSize(f.size)}</span>
+      <button type="button" class="btn-attachment-delete" data-modal-idx="${i}" title="Remove">
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function addModalFiles(files) {
+  for (const file of files) {
+    if (file.size > ATTACHMENT_MAX_BYTES) { showWebToast(`"${file.name}" exceeds 4 MB`, 'error'); continue; }
+    if (!ATTACHMENT_ALLOWED_TYPES.includes(file.type)) { showWebToast(`"${file.name}" type not allowed`, 'error'); continue; }
+    pendingModalFiles.push(file);
+  }
+  renderModalAttachmentList();
+}
+
+document.getElementById('modalAttachmentInput').addEventListener('change', (e) => {
+  addModalFiles(Array.from(e.target.files));
+  e.target.value = '';
+});
+
+document.getElementById('modalAttachmentList').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-modal-idx]');
+  if (!btn) return;
+  pendingModalFiles.splice(Number(btn.dataset.modalIdx), 1);
+  renderModalAttachmentList();
+});
+
+const modalDropzone = document.getElementById('modalDropzone');
+modalDropzone.addEventListener('dragover', (e) => { e.preventDefault(); modalDropzone.classList.add('drag-over'); });
+modalDropzone.addEventListener('dragleave', () => modalDropzone.classList.remove('drag-over'));
+modalDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  modalDropzone.classList.remove('drag-over');
+  addModalFiles(Array.from(e.dataTransfer.files));
+});
+
 taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  const assigneeName = document.getElementById('assignee').value;
 
+  const assigneeName = document.getElementById('assignee').value;
   const newTask = {
     name: document.getElementById('taskName').value,
     assignee: assigneeName,
@@ -1099,18 +1145,36 @@ taskForm.addEventListener('submit', async (e) => {
     position: 0
   };
 
-  const { error } = await supabase.from('tasks').insert([newTask]);
+  const { data: created, error } = await supabase.from('tasks').insert([newTask]).select().single();
   if (error) {
     console.error('Error adding task:', error.message, error.details);
     alert('Failed to add task: ' + error.message);
-  } else {
-    logActivity(`created task "${newTask.name}"`, 'insert');
+    return;
   }
 
+  logActivity(`created task "${newTask.name}"`, 'insert');
+
+  // Upload any pending attachments using the new task ID
+  if (pendingModalFiles.length > 0 && created?.id) {
+    const { data: { user } } = await supabase.auth.getUser();
+    for (const file of pendingModalFiles) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${created.id}/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage.from('task-attachments').upload(path, file, { contentType: file.type });
+      if (upErr) { showWebToast(`Failed to upload "${file.name}"`, 'error'); continue; }
+      await supabase.from('task_attachments').insert({
+        task_id: created.id, file_name: file.name, file_type: file.type,
+        storage_path: path, file_size: file.size, uploaded_by: user?.id || null
+      });
+    }
+  }
+
+  pendingModalFiles = [];
   closeModal();
   taskForm.reset();
   const companyOther = document.getElementById('companyOther');
   if (companyOther) companyOther.style.display = 'none';
+  document.getElementById('modalAttachmentList').innerHTML = '';
 });
 
 // Modal Logic
@@ -1122,6 +1186,8 @@ function openModal() {
 function closeModal() {
   taskModal.classList.add('hidden');
   floatingNav.classList.remove('nav-hidden');
+  pendingModalFiles = [];
+  document.getElementById('modalAttachmentList').innerHTML = '';
 }
 
 openModalBtn.addEventListener('click', openModal);

@@ -69,6 +69,7 @@ const detailCompany = document.getElementById('detailCompany');
 const detailCompanyOther = document.getElementById('detailCompanyOther');
 const detailStakeholder = document.getElementById('detailStakeholder');
 const detailLink = document.getElementById('detailLink');
+const detailLinkOpen = document.getElementById('detailLinkOpen');
 const detailCreatedAt = document.getElementById('detailCreatedAt');
 const detailDescription = document.getElementById('detailDescription');
 
@@ -1277,6 +1278,7 @@ async function openDetailModal(task) {
   setCompanyField(detailCompany, detailCompanyOther, task.company || '');
   detailStakeholder.value = task.stake_holder || '';
   detailLink.value = task.working_link || '';
+  syncLinkOpenBtn();
 
   const dateObj = task.created_at ? new Date(task.created_at) : new Date();
   detailCreatedAt.textContent = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1561,7 +1563,26 @@ detailCompanyOther.addEventListener('blur', () => {
 });
 detailStakeholder.addEventListener('blur', () => updateTaskProperty('stake_holder', detailStakeholder.value.trim()));
 detailLink.addEventListener('blur', () => updateTaskProperty('working_link', detailLink.value.trim()));
+detailLink.addEventListener('input', syncLinkOpenBtn);
 detailDescription.addEventListener('blur', () => updateTaskProperty('description', detailDescription.innerHTML.trim()));
+
+function syncLinkOpenBtn() {
+  const url = detailLink.value.trim();
+  detailLinkOpen.href = url;
+  detailLinkOpen.classList.toggle('hidden', !url);
+}
+
+// Make links inside description clickable
+detailDescription.addEventListener('click', (e) => {
+  const link = e.target.closest('a');
+  if (!link) return;
+  e.preventDefault();
+  const url = link.href;
+  if (url) {
+    if (shell) shell.openExternal(url);
+    else window.open(url, '_blank', 'noopener');
+  }
+});
 
 // Initialize Mentions
 setupMentions(detailDescription);

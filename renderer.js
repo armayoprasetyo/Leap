@@ -1284,6 +1284,7 @@ async function openDetailModal(task) {
   detailCreatedAt.textContent = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
   detailDescription.innerHTML = task.description || '';
+  autolinkDescription();
 
   const savedWidth = parseInt(localStorage.getItem('detailPanelWidth'));
   if (savedWidth >= 280) detailModal.style.width = savedWidth + 'px';
@@ -1564,7 +1565,10 @@ detailCompanyOther.addEventListener('blur', () => {
 detailStakeholder.addEventListener('blur', () => updateTaskProperty('stake_holder', detailStakeholder.value.trim()));
 detailLink.addEventListener('blur', () => updateTaskProperty('working_link', detailLink.value.trim()));
 detailLink.addEventListener('input', syncLinkOpenBtn);
-detailDescription.addEventListener('blur', () => updateTaskProperty('description', detailDescription.innerHTML.trim()));
+detailDescription.addEventListener('blur', () => {
+  autolinkDescription();
+  updateTaskProperty('description', detailDescription.innerHTML.trim());
+});
 
 function syncLinkOpenBtn() {
   const url = detailLink.value.trim();
@@ -1572,16 +1576,45 @@ function syncLinkOpenBtn() {
   detailLinkOpen.classList.toggle('hidden', !url);
 }
 
-// Make links inside description clickable
+// Walk text nodes and wrap bare URLs in <a> tags (skips nodes already inside <a>)
+function autolinkDescription() {
+  const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.parentNode.tagName === 'A') return;
+      const text = node.textContent;
+      if (!URL_RE.test(text)) return;
+      URL_RE.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      while ((m = URL_RE.exec(text)) !== null) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const a = document.createElement('a');
+        a.href = m[0];
+        a.textContent = m[0];
+        a.target = '_blank';
+        a.rel = 'noopener';
+        frag.appendChild(a);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    } else {
+      Array.from(node.childNodes).forEach(walk);
+    }
+  }
+  walk(detailDescription);
+}
+
+// Clicks on links in description — open externally
 detailDescription.addEventListener('click', (e) => {
   const link = e.target.closest('a');
   if (!link) return;
   e.preventDefault();
   const url = link.href;
-  if (url) {
-    if (shell) shell.openExternal(url);
-    else window.open(url, '_blank', 'noopener');
-  }
+  if (!url) return;
+  if (shell) shell.openExternal(url);
+  else window.open(url, '_blank', 'noopener');
 });
 
 // Initialize Mentions
